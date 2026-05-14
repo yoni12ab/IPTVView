@@ -20,7 +20,7 @@ class MainActivity : AppCompatActivity() {
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
 
     // ── Replace with your GitHub Pages URL after deploying ──────────────────
-    private val APP_URL = "https://YOUR_GITHUB_USERNAME.github.io/IpTvYoni/"
+    private val APP_URL = "https://yoni12ab.github.io/IPTVView/"
     // ────────────────────────────────────────────────────────────────────────
 
     @SuppressLint("SetJavaScriptEnabled")

@@ -710,7 +710,7 @@
       <button class="refresh-btn" onclick="togglePageFullscreen()" title="מסך מלא">⛶</button>
       <button class="logout-btn" onclick="logout();closeMenu();">יציאה ↩</button>
     </div>
-    <div style="padding:8px 14px;font-size:11px;color:#7a8499;border-top:1px solid #2a3045;">v1.1.0 · dropdown in sidebar · cache-bust refresh · save last ch/cat</div>
+    <div style="padding:8px 14px;font-size:11px;color:#7a8499;border-top:1px solid #2a3045;">v1.1.1 · search full list · dropdown in sidebar · save last ch/cat</div>
     <div style="padding:10px 14px;border-top:1px solid #2a3045;display:flex;gap:14px;flex-wrap:wrap;">
       <a href="#" onclick="openLocal();return false;" style="color:#4a9eff;font-size:13px;text-decoration:underline;">🖥 פתח בטאב</a>
       <a href="#" onclick="downloadLocal();return false;" style="color:#4a9eff;font-size:13px;text-decoration:underline;">⬇ הורד HTML</a>
@@ -1077,13 +1077,14 @@ function clearSearch() {
 function filterChannels() {
   var q = document.getElementById('search-box').value.trim().toLowerCase();
   filtCh = allCh.filter(function(ch) {
+    var hebrewName = ch.hebrewName ? ch.hebrewName.toLowerCase() : '';
+    var matchQ = !q || ch.name.toLowerCase().indexOf(q) !== -1 || ch.category_name.toLowerCase().indexOf(q) !== -1 || hebrewName.indexOf(q) !== -1;
+    if (q) return matchQ; // searching: ignore category, search all
     var matchCat;
     if (activeCatId === 'all') matchCat = true;
     else if (activeCatId === 'favs') matchCat = favs.has(String(ch.stream_id));
     else matchCat = ch.category_id == activeCatId;
-    var hebrewName = ch.hebrewName ? ch.hebrewName.toLowerCase() : '';
-    var matchQ = !q || ch.name.toLowerCase().indexOf(q) !== -1 || ch.category_name.toLowerCase().indexOf(q) !== -1 || hebrewName.indexOf(q) !== -1;
-    return matchCat && matchQ;
+    return matchCat;
   });
   renderChannels(filtCh);
 }

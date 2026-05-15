@@ -849,7 +849,12 @@ function addToHomeScreen() {
     window._installPrompt.prompt();
     window._installPrompt.userChoice.then(function() { window._installPrompt = null; });
   } else {
-    alert('כדי להוסיף לדף הבית:\nתפריט Chrome (⋮) ← "הוסף למסך הבית"');
+    alert(
+      'איך להוסיף קיצור דרך:\n\n' +
+      '1. Chrome: תפריט (⋮) ← "הוסף למסך הבית"\n' +
+      '2. אם אין אפשרות כזו: תפריט (⋮) ← "הוסף לסימניות" ← אחר-כך ממנהל הסימניות בחר "הוסף לדף הבית"\n' +
+      '3. לחלופין: השתמש בקובץ APK לאפליקציה מלאה'
+    );
   }
 }
 

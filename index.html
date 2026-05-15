@@ -517,23 +517,28 @@
   .channel-item:active { transform: scale(.98); }
 
   .ch-logo {
-    width: 52px;
-    height: 52px;
-    border-radius: 10px;
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
     object-fit: contain;
     background: #1e2330;
     flex-shrink: 0;
+    border: 1.5px solid #2a3045;
+    padding: 3px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.35);
   }
   .ch-logo-placeholder {
-    width: 52px;
-    height: 52px;
-    border-radius: 10px;
-    background: #1e2330;
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    background: linear-gradient(135deg,#1e2330 60%,#252d40);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-size: 28px;
     flex-shrink: 0;
+    border: 1.5px solid #2a3045;
+    box-shadow: 0 2px 8px rgba(0,0,0,.35);
   }
 
   .ch-info { flex: 1; min-width: 0; }
@@ -549,11 +554,24 @@
   .ch-cat {
     font-size: 13px;
     color: #7a8499;
-    margin-top: 3px;
+    margin-top: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  .ch-quality {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-top: 3px;
+    letter-spacing: .5px;
+  }
+  .ch-quality.q4k  { background: #3b1f6e; color: #c084fc; }
+  .ch-quality.qfhd { background: #1e3a5f; color: #60a5fa; }
+  .ch-quality.qhd  { background: #14453a; color: #34d399; }
+  .ch-quality.qsd  { background: #2a3045; color: #7a8499; }
 
   .ch-fav {
     background: none;
@@ -710,7 +728,7 @@
       <button class="refresh-btn" onclick="togglePageFullscreen()" title="מסך מלא">⛶</button>
       <button class="logout-btn" onclick="logout();closeMenu();">יציאה ↩</button>
     </div>
-    <div style="padding:8px 14px;font-size:11px;color:#7a8499;border-top:1px solid #2a3045;">v1.1.1 · search full list · dropdown in sidebar · save last ch/cat</div>
+    <div style="padding:8px 14px;font-size:11px;color:#7a8499;border-top:1px solid #2a3045;">v1.1.2 · quality badges in Hebrew · bigger icons · search full list</div>
     <div style="padding:10px 14px;border-top:1px solid #2a3045;display:flex;gap:14px;flex-wrap:wrap;">
       <a href="#" onclick="openLocal();return false;" style="color:#4a9eff;font-size:13px;text-decoration:underline;">🖥 פתח בטאב</a>
       <a href="#" onclick="downloadLocal();return false;" style="color:#4a9eff;font-size:13px;text-decoration:underline;">⬇ הורד HTML</a>
@@ -1089,6 +1107,18 @@ function filterChannels() {
   renderChannels(filtCh);
 }
 
+function getQuality(name) {
+  var n = name.toUpperCase();
+  if (/\b(4K|UHD|2160)\b/.test(n)) return { label: '✨ הכי חד', cls: 'q4k' };
+  if (/\b(FHD|1080)\b/.test(n))    return { label: '💎 חד מאוד', cls: 'qfhd' };
+  if (/\bHD\b|\b720\b/.test(n))   return { label: '👍 טוב', cls: 'qhd' };
+  if (/\bSD\b|\b480\b|\b360\b/.test(n)) return { label: 'רגיל', cls: 'qsd' };
+  return null;
+}
+function stripQuality(name) {
+  return name.replace(/[\s|:·\-]*(4K|UHD|FHD|HD|SD|1080[pi]?|720[pi]?|2160[pi]?|480[pi]?)/gi, '').trim();
+}
+
 function renderChannels(list) {
   var container = document.getElementById('channel-list');
   document.getElementById('channel-count-text').textContent = list.length + ' ערוצים';
@@ -1104,10 +1134,15 @@ function renderChannels(list) {
           + '<div class="ch-logo-placeholder" style="display:none">📺</div>'
         : '<div class="ch-logo-placeholder">📺</div>';
       var isFav = favs.has(String(ch.stream_id));
+      var dispName = ch.hebrewName || ch.name;
+      var qual = getQuality(ch.name);
+      var cleanName = stripQuality(dispName);
+      var subLine = (ch.hebrewName && ch.hebrewName !== ch.name) ? escHtml(stripQuality(ch.name)) : escHtml(ch.category_name);
+      var qualHtml = qual ? '<span class="ch-quality ' + qual.cls + '">' + qual.label + '</span>' : '';
       item.innerHTML = logoEl
         + '<div class="ch-info">'
-        + '<div class="ch-name">' + escHtml(ch.hebrewName || ch.name) + '</div>'
-        + '<div class="ch-cat">' + escHtml((ch.hebrewName && ch.hebrewName !== ch.name) ? ch.name : ch.category_name) + '</div>'
+        + '<div class="ch-name">' + escHtml(cleanName) + '</div>'
+        + '<div class="ch-cat">' + subLine + qualHtml + '</div>'
         + '</div>'
         + '<button class="ch-fav' + (isFav ? ' active' : '') + '" data-id="' + ch.stream_id + '" title="מועדפים">★</button>';
       item.querySelector('.ch-fav').addEventListener('click', function(e) {

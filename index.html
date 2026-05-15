@@ -43,9 +43,12 @@
   /* ─── LOGIN SCREEN ──────────────────────────────────────── */
   #login-screen {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
-    height: 100vh;
+    min-height: 100vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px 0;
     background: radial-gradient(ellipse at 60% 40%, #1a2240 0%, #0d0f14 70%);
   }
 
@@ -736,8 +739,9 @@
 
     <!-- SIDEBAR -->
     <div id="sidebar">
-      <div id="sidebar-search">
-        <input type="text" id="search-box" placeholder="🔍 חיפוש ערוץ…" oninput="filterChannels()" autocomplete="off">
+      <div id="sidebar-search" style="position:relative;">
+        <input type="text" id="search-box" placeholder="🔍 חיפוש ערוץ…" oninput="filterChannels();document.getElementById('search-clear').style.display=this.value?'block':'none';" autocomplete="off" style="padding-left:32px;">
+        <button id="search-clear" onclick="clearSearch()" style="display:none;position:absolute;left:10px;top:50%;-webkit-transform:translateY(-50%);transform:translateY(-50%);background:none;border:none;color:#7a8499;font-size:18px;cursor:pointer;padding:0;line-height:1;">✕</button>
       </div>
       <div id="channel-count" style="display:flex;align-items:center;justify-content:space-between;padding-left:10px;">
         <span id="channel-count-text"></span>
@@ -992,7 +996,9 @@ function loadApp() {
         return Object.assign({}, ch, { category_name: catMap[ch.category_id] || 'כללי' });
       }).sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
       if (allCh.length === 0) showToast('לא נמצאו ערוצים');
-      if (favs.size > 0) activeCatId = 'favs';
+      var savedCat = safeStorage.getItem('iptv_last_cat');
+      if (savedCat) activeCatId = savedCat;
+      else if (favs.size > 0) activeCatId = 'favs';
       buildCategories();
       applyCachedTranslations();
       filterChannels();
@@ -1000,6 +1006,12 @@ function loadApp() {
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
       autoTranslate();
+      var lastChId = safeStorage.getItem('iptv_last_ch');
+      if (lastChId) {
+        var lastCh = null;
+        for (var li = 0; li < allCh.length; li++) { if (String(allCh[li].stream_id) === lastChId) { lastCh = allCh[li]; break; } }
+        if (lastCh) setTimeout(function() { playChannel(lastCh); }, 800);
+      }
     })
     .catch(function(e) {
       hideLoading();
@@ -1038,8 +1050,15 @@ function buildCategories() {
 
 function selectCatByDropdown(catId) {
   activeCatId = catId;
+  safeStorage.setItem('iptv_last_cat', catId);
   filterChannels();
   closeMenu();
+}
+
+function clearSearch() {
+  document.getElementById('search-box').value = '';
+  document.getElementById('search-clear').style.display = 'none';
+  filterChannels();
 }
 
 // ═══════════════════════════════════════
@@ -1146,16 +1165,17 @@ function autoTranslate() {
       return;
     }
     var batch = batches[batchIdx];
-    var text = batch.names.join('\n');
+    var SEP = ' ||| ';
+    var text = batch.names.join(SEP);
     var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=he&dt=t&q=' + encodeURIComponent(text);
     fetch(url)
       .then(function(r) { return r.json(); })
       .then(function(data) {
         var full = '';
         for (var s = 0; s < data[0].length; s++) full += data[0][s][0];
-        var lines = full.split('\n');
+        var parts = full.split('|||');
         for (var t = 0; t < batch.names.length; t++) {
-          var tr = (lines[t] || batch.names[t]).trim();
+          var tr = parts[t] ? parts[t].trim() : batch.names[t];
           allCh[batch.indices[t]].hebrewName = tr;
           cached[batch.names[t]] = tr;
         }
@@ -1193,6 +1213,7 @@ function buildStreamUrl(ch) {
 
 function playChannel(ch) {
   activeStreamId = ch.stream_id;
+  safeStorage.setItem('iptv_last_ch', String(ch.stream_id));
   var url = buildStreamUrl(ch);
   var items = Array.prototype.slice.call(document.querySelectorAll('.channel-item'));
   for (var i = 0; i < items.length; i++) {
@@ -1312,10 +1333,12 @@ function togglePageFullscreen() {
 
 document.getElementById('video-wrapper').addEventListener('click', function() {
   if (!activeStreamId) return;
-  var el = document.documentElement;
+  var video = document.getElementById('video');
   if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-    var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
-    if (req) { try { req.call(el); } catch(e) {} }
+    var req = video.requestFullscreen || video.webkitRequestFullscreen || video.mozRequestFullScreen
+           || document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+    var target = (video.requestFullscreen || video.webkitRequestFullscreen) ? video : document.documentElement;
+    if (req) { try { req.call(target); } catch(e) {} }
   } else {
     var ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
     if (ex) { try { ex.call(document); } catch(e) {} }

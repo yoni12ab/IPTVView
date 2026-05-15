@@ -1,9 +1,9 @@
 -- Merging decision tree log ---
 manifest
-ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:2:1-32:12
-INJECTED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:2:1-32:12
-INJECTED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:2:1-32:12
-INJECTED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:2:1-32:12
+ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:2:1-34:12
+INJECTED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:2:1-34:12
+INJECTED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:2:1-34:12
+INJECTED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:2:1-34:12
 MERGED from [androidx.appcompat:appcompat-resources:1.6.1] /Users/yoni/.gradle/caches/transforms-3/409bf4e449c8c39766db6facbcaee7cd/transformed/jetified-appcompat-resources-1.6.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.appcompat:appcompat:1.6.1] /Users/yoni/.gradle/caches/transforms-3/483e5f2a6243aac7190e0623d19f2de2/transformed/appcompat-1.6.1/AndroidManifest.xml:17:1-22:12
 MERGED from [androidx.fragment:fragment:1.3.6] /Users/yoni/.gradle/caches/transforms-3/25f1976fac28d0f873be76bdc2287de9/transformed/fragment-1.3.6/AndroidManifest.xml:17:1-24:12
@@ -57,8 +57,8 @@ ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:8:5
 	android:name
 		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:8:19-62
 application
-ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:10:5-30:19
-INJECTED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:10:5-30:19
+ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:10:5-32:19
+INJECTED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:10:5-32:19
 MERGED from [androidx.emoji2:emoji2:1.2.0] /Users/yoni/.gradle/caches/transforms-3/3a4607f18e3d0fc1b7044e1b18b6baaf/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.emoji2:emoji2:1.2.0] /Users/yoni/.gradle/caches/transforms-3/3a4607f18e3d0fc1b7044e1b18b6baaf/transformed/jetified-emoji2-1.2.0/AndroidManifest.xml:23:5-33:19
 MERGED from [androidx.core:core:1.12.0] /Users/yoni/.gradle/caches/transforms-3/ffcf09bf8e38693d77e6db9632c3d1a3/transformed/core-1.12.0/AndroidManifest.xml:28:5-89
@@ -74,39 +74,43 @@ MERGED from [androidx.versionedparcelable:versionedparcelable:1.1.1] /Users/yoni
 	android:appComponentFactory
 		ADDED from [androidx.core:core:1.12.0] /Users/yoni/.gradle/caches/transforms-3/ffcf09bf8e38693d77e6db9632c3d1a3/transformed/core-1.12.0/AndroidManifest.xml:28:18-86
 	android:label
-		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:12:9-41
+		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:14:9-41
+	android:roundIcon
+		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:13:9-54
+	android:icon
+		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:12:9-43
 	android:allowBackup
 		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:11:9-36
 	android:theme
-		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:13:9-46
+		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:15:9-46
 	android:usesCleartextTraffic
-		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:14:9-44
+		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:16:9-44
 activity#com.iptv.yoni.MainActivity
-ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:16:9-28:20
+ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:18:9-30:20
 	android:screenOrientation
-		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:21:13-56
+		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:23:13-56
 	android:launchMode
-		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:20:13-44
+		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:22:13-44
 	android:exported
-		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:19:13-36
+		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:21:13-36
 	android:configChanges
-		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:18:13-106
+		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:20:13-106
 	android:name
-		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:17:13-41
+		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:19:13-41
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER+category:name:android.intent.category.LEANBACK_LAUNCHER
-ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:23:13-27:29
+ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:25:13-29:29
 action#android.intent.action.MAIN
-ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:24:17-69
+ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:26:17-69
 	android:name
-		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:24:25-66
+		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:26:25-66
 category#android.intent.category.LAUNCHER
-ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:25:17-77
+ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:27:17-77
 	android:name
-		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:25:27-74
+		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:27:27-74
 category#android.intent.category.LEANBACK_LAUNCHER
-ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:26:17-86
+ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:28:17-86
 	android:name
-		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:26:27-83
+		ADDED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml:28:27-83
 uses-sdk
 INJECTED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml reason: use-sdk injection requested
 INJECTED from /Users/yoni/dev/IpTvYoni/android/app/src/main/AndroidManifest.xml

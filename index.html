@@ -1205,7 +1205,8 @@ function playChannel(ch) {
   if (warnEl) {
     var isHttpsPage = window.location.protocol === 'https:';
     var isHttpStream = url.indexOf('http://') === 0;
-    warnEl.style.display = (isHttpsPage && isHttpStream && !videoProxy) ? 'block' : 'none';
+    var isWebView = /wv\)/.test(navigator.userAgent) || (/Android/.test(navigator.userAgent) && !/Chrome\/[0-9]/.test(navigator.userAgent));
+    warnEl.style.display = (isHttpsPage && isHttpStream && !videoProxy && !isWebView) ? 'block' : 'none';
   }
   startHLS(url);
 }

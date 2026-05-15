@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="IPTV">
+<meta name="theme-color" content="#0d0f14">
+<link rel="manifest" href="manifest.json">
 <title>📺 טלוויזיה</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap');
@@ -696,9 +701,10 @@
       <button class="logout-btn" onclick="logout();closeMenu();">יציאה ↩</button>
     </div>
     <div style="padding:8px 14px;font-size:11px;color:#7a8499;border-top:1px solid #2a3045;">v15-May-2026 · favs · ES5 · local mode</div>
-    <div style="padding:10px 14px;border-top:1px solid #2a3045;display:flex;gap:14px;">
+    <div style="padding:10px 14px;border-top:1px solid #2a3045;display:flex;gap:14px;flex-wrap:wrap;">
       <a href="#" onclick="openLocal();return false;" style="color:#4a9eff;font-size:13px;text-decoration:underline;">🖥 פתח בטאב</a>
       <a href="#" onclick="downloadLocal();return false;" style="color:#4a9eff;font-size:13px;text-decoration:underline;">⬇ הורד HTML</a>
+      <a href="#" onclick="addToHomeScreen();return false;" style="color:#4a9eff;font-size:13px;text-decoration:underline;">📌 קיצור דרך</a>
     </div>
   </div>
 
@@ -831,6 +837,20 @@ function cancelLogin() {
   safeStorage.removeItem('iptv_creds');
   document.getElementById('login-screen').style.display = 'flex';
   setError('');
+}
+
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  window._installPrompt = e;
+});
+
+function addToHomeScreen() {
+  if (window._installPrompt) {
+    window._installPrompt.prompt();
+    window._installPrompt.userChoice.then(function() { window._installPrompt = null; });
+  } else {
+    alert('כדי להוסיף לדף הבית:\nתפריט Chrome (⋮) ← "הוסף למסך הבית"');
+  }
 }
 
 function downloadLocal() {
@@ -1112,7 +1132,7 @@ function startHLS(url) {
   var video = document.getElementById('video');
   stopPlayer();
   if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-    hls = new Hls({ lowLatencyMode: true, maxBufferLength: 20 });
+    hls = new Hls({ lowLatencyMode: false, maxBufferLength: 60, maxMaxBufferLength: 120, maxBufferSize: 60*1000*1000, maxBufferHole: 0.5 });
     hls.loadSource(url);
     hls.attachMedia(video);
     hls.on(Hls.Events.MANIFEST_PARSED, function() { video.play().catch(function() {}); });

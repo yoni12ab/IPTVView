@@ -1,0 +1,17 @@
+{
+  "name": "הטלוויזיה שלי",
+  "short_name": "IPTV",
+  "description": "ערוצים ישראליים",
+  "start_url": "/IPTVView/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d0f14",
+  "theme_color": "#0d0f14",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='24' fill='%230d0f14'/%3E%3Ctext y='130' x='96' text-anchor='middle' font-size='120'%3E📺%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

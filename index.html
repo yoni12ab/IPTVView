@@ -509,15 +509,30 @@
     text-overflow: ellipsis;
   }
 
-  .ch-play-icon {
-    font-size: 26px;
-    color: var(--accent);
-    opacity: 0;
-    transition: opacity .15s;
+  .ch-fav {
+    background: none;
+    border: none;
+    font-size: 22px;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 4px 6px;
+    flex-shrink: 0;
+    line-height: 1;
+    transition: color .15s, transform .1s;
+  }
+  .ch-fav:hover  { color: #f0b429; }
+  .ch-fav.active { color: #f0b429; }
+  .ch-fav:active { transform: scale(1.3); }
+
+  #sidebar-search {
+    padding: 10px 10px 6px;
     flex-shrink: 0;
   }
-  .channel-item:hover .ch-play-icon,
-  .channel-item.active .ch-play-icon { opacity: 1; }
+  #sidebar-search #search-box {
+    font-size: 15px;
+    padding: 10px 14px;
+    margin-bottom: 0;
+  }
 
   /* LOADING OVERLAY */
   #loading {
@@ -605,6 +620,11 @@
       <label for="proxy-cb" style="display:inline;text-transform:none;letter-spacing:0;font-size:15px;color:var(--muted);cursor:pointer;">מצב דפדפן — CORS Proxy (נדרש ב-Chrome/Firefox)</label>
     </div>
 
+    <div style="margin-bottom:16px;">
+      <label for="vproxy" style="font-size:13px;margin-bottom:6px;">Video Proxy URL <span style="font-weight:400;color:var(--muted);">(אופציונלי — לצפייה בדפדפן)</span></label>
+      <input type="url" id="vproxy" placeholder="https://iptv-proxy.MY-NAME.workers.dev" autocomplete="off" dir="ltr">
+    </div>
+
     <button class="btn" onclick="doLogin()">🚀 כניסה</button>
     <div class="login-error" id="login-error"></div>
   </div>
@@ -633,9 +653,6 @@
       <div id="status-dot"></div>
       <span id="status-text">מחובר</span>
       <button class="drawer-close" onclick="closeMenu()">✕</button>
-    </div>
-    <div class="drawer-search">
-      <input type="text" id="search-box" placeholder="🔍 חיפוש ערוץ…" oninput="filterChannels()" autocomplete="off">
     </div>
     <div id="categories"></div>
     <div class="drawer-actions">
@@ -666,6 +683,9 @@
 
     <!-- SIDEBAR -->
     <div id="sidebar">
+      <div id="sidebar-search">
+        <input type="text" id="search-box" placeholder="🔍 חיפוש ערוץ…" oninput="filterChannels()" autocomplete="off">
+      </div>
       <div id="channel-count"></div>
       <div id="channel-list"></div>
     </div>
@@ -692,6 +712,8 @@ let hls     = null;
 let activeStreamId = null;
 let useProxy = false;
 const CORS_PROXY = 'https://corsproxy.io/?url=';
+let videoProxy = '';   // Cloudflare Worker URL for HLS proxying
+let favs = new Set();
 
 // ═══════════════════════════════════════
 //  HEBREW / ISRAELI KEYWORDS
@@ -723,6 +745,8 @@ async function doLogin() {
   setError('');
   useProxy = document.getElementById('proxy-cb').checked;
   localStorage.setItem('iptv_proxy', useProxy ? '1' : '');
+  videoProxy = document.getElementById('vproxy').value.trim().replace(/\/$/, '');
+  localStorage.setItem('iptv_vproxy', videoProxy);
   creds = { srv, usr, pwd };
   localStorage.setItem('iptv_creds', JSON.stringify(creds));
   await loadApp();
@@ -745,6 +769,14 @@ window.addEventListener('DOMContentLoaded', () => {
   const savedProxy = localStorage.getItem('iptv_proxy');
   useProxy = onHttps || savedProxy === '1';
   document.getElementById('proxy-cb').checked = useProxy;
+
+  const savedVProxy = localStorage.getItem('iptv_vproxy');
+  if (savedVProxy) {
+    videoProxy = savedVProxy;
+    document.getElementById('vproxy').value = savedVProxy;
+  }
+
+  try { favs = new Set(JSON.parse(localStorage.getItem('iptv_favs') || '[]')); } catch(_) {}
 
   const saved = localStorage.getItem('iptv_creds');
   if (saved) {
@@ -830,8 +862,15 @@ function buildCategories() {
   const container = document.getElementById('categories');
   container.innerHTML = '';
 
+  const favBtn = document.createElement('button');
+  favBtn.className = 'cat-btn' + (activeCatId === 'favs' ? ' active' : '');
+  favBtn.textContent = '⭐ מועדפים';
+  favBtn.dataset.cat = 'favs';
+  favBtn.onclick = () => selectCat('favs', favBtn);
+  container.appendChild(favBtn);
+
   const allBtn = document.createElement('button');
-  allBtn.className = 'cat-btn active';
+  allBtn.className = 'cat-btn' + (activeCatId === 'all' ? ' active' : '');
   allBtn.textContent = '🌐 הכל';
   allBtn.dataset.cat = 'all';
   allBtn.onclick = () => selectCat('all', allBtn);
@@ -862,8 +901,12 @@ function selectCat(catId, btn) {
 function filterChannels() {
   const q = document.getElementById('search-box').value.trim().toLowerCase();
   filtCh = allCh.filter(ch => {
-    const matchCat = activeCatId === 'all' || ch.category_id == activeCatId;
-    const matchQ   = !q || ch.name.toLowerCase().includes(q) || ch.category_name.toLowerCase().includes(q);
+    const matchCat = activeCatId === 'all'
+      ? true
+      : activeCatId === 'favs'
+        ? favs.has(String(ch.stream_id))
+        : ch.category_id == activeCatId;
+    const matchQ = !q || ch.name.toLowerCase().includes(q) || ch.category_name.toLowerCase().includes(q);
     return matchCat && matchQ;
   });
   renderChannels(filtCh);
@@ -884,18 +927,29 @@ function renderChannels(list) {
       ? `<img class="ch-logo" src="${escHtml(ch.stream_icon)}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
         + `<div class="ch-logo-placeholder" style="display:none">📺</div>`
       : `<div class="ch-logo-placeholder">📺</div>`;
-
+    const isFav = favs.has(String(ch.stream_id));
     item.innerHTML = `
       ${logoEl}
       <div class="ch-info">
         <div class="ch-name">${escHtml(ch.name)}</div>
         <div class="ch-cat">${escHtml(ch.category_name)}</div>
       </div>
-      <div class="ch-play-icon">▶</div>
+      <button class="ch-fav${isFav ? ' active' : ''}" data-id="${ch.stream_id}" title="מועדפים">★</button>
     `;
+    item.querySelector('.ch-fav').addEventListener('click', e => { e.stopPropagation(); toggleFav(ch.stream_id); });
     item.addEventListener('click', () => playChannel(ch));
     container.appendChild(item);
   });
+}
+
+function toggleFav(streamId) {
+  const id = String(streamId);
+  if (favs.has(id)) favs.delete(id);
+  else favs.add(id);
+  localStorage.setItem('iptv_favs', JSON.stringify([...favs]));
+  const btn = document.querySelector(`.ch-fav[data-id="${id}"]`);
+  if (btn) btn.classList.toggle('active', favs.has(id));
+  if (activeCatId === 'favs') filterChannels();
 }
 
 function escHtml(s) {
@@ -906,7 +960,8 @@ function escHtml(s) {
 //  PLAYBACK
 // ═══════════════════════════════════════
 function buildStreamUrl(ch) {
-  return `${creds.srv}/live/${encodeURIComponent(creds.usr)}/${encodeURIComponent(creds.pwd)}/${ch.stream_id}.m3u8`;
+  const url = `${creds.srv}/live/${encodeURIComponent(creds.usr)}/${encodeURIComponent(creds.pwd)}/${ch.stream_id}.m3u8`;
+  return videoProxy ? `${videoProxy}?url=${encodeURIComponent(url)}` : url;
 }
 
 function playChannel(ch) {
@@ -922,12 +977,12 @@ function playChannel(ch) {
   document.getElementById('np-status').innerHTML = '<span class="live-badge">LIVE</span>';
   document.getElementById('placeholder').style.display = 'none';
 
-  // Warn if browser will block HTTP stream from HTTPS page
+  // Warn if browser will block HTTP stream from HTTPS page (hide if proxy is active)
   const warnEl = document.getElementById('mixed-warn');
   if (warnEl) {
     const isHttpsPage  = window.location.protocol === 'https:';
     const isHttpStream = url.startsWith('http://');
-    warnEl.style.display = (isHttpsPage && isHttpStream) ? 'block' : 'none';
+    warnEl.style.display = (isHttpsPage && isHttpStream && !videoProxy) ? 'block' : 'none';
   }
 
   startHLS(url);

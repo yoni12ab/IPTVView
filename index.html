@@ -368,6 +368,7 @@
     position: relative;
     min-width: 0;
   }
+  #main.video-only #sidebar { display: none !important; }
 
   #video-wrapper {
     flex: 1;
@@ -728,7 +729,7 @@
     <div id="player-panel">
       <div id="video-wrapper">
         <video id="video" controls playsinline></video>
-        <button id="fs-btn" onclick="toggleVideoFullscreen()" style="display:none;position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);border:none;border-radius:8px;color:#fff;font-size:20px;width:36px;height:36px;cursor:pointer;z-index:10;line-height:1;">⛶</button>
+        <button id="fs-btn" onclick="toggleVideoFullscreen()" style="display:none;position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);border:none;border-radius:8px;color:#fff;font-size:20px;width:36px;height:36px;cursor:pointer;z-index:10;">⛶</button>
         <div id="placeholder">
           <div class="ph-icon">📡</div>
           <p>בחר ערוץ מהרשימה</p>
@@ -1342,22 +1343,11 @@ function togglePageFullscreen() {
 }
 
 function toggleVideoFullscreen() {
-  var sidebar = document.getElementById('sidebar');
+  var main = document.getElementById('main');
   var fsBtn = document.getElementById('fs-btn');
-  var menuBtn = document.getElementById('menu-btn');
-  var npBar = document.getElementById('now-playing-bar');
-  var isFs = sidebar.style.display === 'none';
-  if (!isFs) {
-    sidebar.style.display = 'none';
-    if (menuBtn) menuBtn.style.display = 'none';
-    if (npBar) npBar.style.display = 'none';
-    fsBtn.textContent = '\u2715';
-  } else {
-    sidebar.style.display = '';
-    if (menuBtn) menuBtn.style.display = '';
-    if (npBar) npBar.style.display = '';
-    fsBtn.textContent = '\u26f6';
-  }
+  var isFs = main.classList.contains('video-only');
+  main.classList.toggle('video-only', !isFs);
+  fsBtn.textContent = !isFs ? '✕' : '⛶';
 }
 
 // ═══════════════════════════════════════

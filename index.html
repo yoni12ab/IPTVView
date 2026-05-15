@@ -697,8 +697,9 @@
       <span id="status-text">מחובר</span>
       <button class="drawer-close" onclick="closeMenu()">✕</button>
     </div>
-    <div style="padding:10px 12px;">
-      <select id="cat-select" onchange="selectCatByDropdown(this.value)" style="width:100%;background:#1e2330;border:2px solid #2a3045;color:#e8eaf0;font-family:'Heebo',sans-serif;font-size:16px;padding:10px 12px;border-radius:12px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;"></select>
+    <div style="padding:10px 12px;position:relative;">
+      <select id="cat-select" onchange="selectCatByDropdown(this.value)" style="width:100%;background:#1e2330;border:2px solid #2a3045;color:#e8eaf0;font-family:'Heebo',sans-serif;font-size:16px;padding:10px 36px 10px 12px;border-radius:12px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;"></select>
+      <span style="position:absolute;left:22px;top:50%;-webkit-transform:translateY(-50%);transform:translateY(-50%);color:#7a8499;font-size:14px;pointer-events:none;">▼</span>
     </div>
     <div class="drawer-actions">
       <button class="refresh-btn" id="refresh-btn" onclick="refreshChannels()" title="רענן ערוצים">⟳</button>

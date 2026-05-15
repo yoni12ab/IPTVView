@@ -693,29 +693,42 @@ async function apiGet(action) {
 }
 
 async function loadApp() {
-  showLoading('טוען ערוצים…');
+  showLoading('טוען קטגוריות…');
   try {
-    // Fetch categories + streams in parallel
-    const [cats, streams] = await Promise.all([
-      apiGet('get_live_categories').catch(() => []),
-      apiGet('get_live_streams')
-    ]);
+    // Step 1: fetch categories only (small response)
+    const cats = await apiGet('get_live_categories').catch(() => []);
 
-    // Build category map
     catMap = {};
     (cats || []).forEach(c => { catMap[c.category_id] = c.category_name || ''; });
 
-    // Filter: only categories containing 'heb', sorted by name
-    allCh = (streams || [])
-      .filter(ch => (catMap[ch.category_id] || '').toLowerCase().includes('heb'))
+    // Step 2: find Hebrew category IDs
+    const hebCatIds = Object.entries(catMap)
+      .filter(([, name]) => name.toLowerCase().includes('heb'))
+      .map(([id]) => id);
+
+    showLoading('טוען ערוצים…');
+
+    // Step 3: fetch streams per Hebrew category in parallel (small targeted requests)
+    let streams = [];
+    if (hebCatIds.length > 0) {
+      const results = await Promise.all(
+        hebCatIds.map(cid =>
+          apiGet('get_live_streams&category_id=' + cid).catch(() => [])
+        )
+      );
+      streams = results.flat();
+    } else {
+      // Fallback: no Hebrew categories found — load all
+      streams = await apiGet('get_live_streams').catch(() => []);
+      showToast('לא נמצאו קטגוריות Hebrew — מציג הכל');
+    }
+
+    allCh = streams
       .map(ch => ({ ...ch, category_name: catMap[ch.category_id] || 'כללי' }))
       .sort((a, b) => a.name.localeCompare(b.name));
 
     if (allCh.length === 0) {
-      allCh = (streams || [])
-        .map(ch => ({ ...ch, category_name: catMap[ch.category_id] || 'כללי' }))
-        .sort((a, b) => a.name.localeCompare(b.name));
-      showToast('לא נמצאו ערוצי Hebrew — מציג הכל');
+      showToast('לא נמצאו ערוצים');
     }
 
     buildCategories();

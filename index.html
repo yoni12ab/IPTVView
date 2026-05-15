@@ -1085,22 +1085,21 @@ function playChannel(ch) {
 function startHLS(url) {
   var video = document.getElementById('video');
   stopPlayer();
-  alert('startHLS: ' + url.substring(0, 80));
   if (typeof Hls !== 'undefined' && Hls.isSupported()) {
-    alert('Using hls.js');
     hls = new Hls({ lowLatencyMode: true, maxBufferLength: 20 });
     hls.loadSource(url);
     hls.attachMedia(video);
     hls.on(Hls.Events.MANIFEST_PARSED, function() { video.play().catch(function() {}); });
     hls.on(Hls.Events.ERROR, function(e, data) {
-      if (data.fatal) alert('HLS error: ' + data.type + ' / ' + data.details);
+      if (data.fatal) showToast('שגיאה: ' + data.type + ' — ' + data.details);
     });
   } else {
-    alert('Native video fallback (Hls=' + typeof Hls + ')');
     video.src = url;
     video.load();
-    video.onerror = function() { alert('video error: ' + (video.error ? video.error.code + ' ' + video.error.message : 'unknown')); };
-    video.play().catch(function(e) { alert('play() rejected: ' + e); });
+    video.onerror = function() {
+      showToast('שגיאת וידאו: ' + (video.error ? video.error.code : '?'));
+    };
+    video.play().catch(function(e) { showToast('play נדחה: ' + e.message); });
   }
 }
 

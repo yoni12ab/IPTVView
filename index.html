@@ -644,7 +644,10 @@
     <input type="text" id="usr" placeholder="username" autocomplete="off" dir="ltr">
 
     <label for="pwd">סיסמה</label>
-    <input type="password" id="pwd" placeholder="password" autocomplete="off" dir="ltr">
+    <div style="position:relative;">
+      <input type="password" id="pwd" placeholder="password" autocomplete="off" dir="ltr" style="padding-left:52px;">
+      <button type="button" id="pwd-toggle" onclick="togglePwd()" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:22px;padding:4px;color:#666;line-height:1;">👁</button>
+    </div>
 
     <div class="proxy-row">
       <input type="checkbox" id="proxy-cb">
@@ -725,6 +728,31 @@
 <!-- TOAST -->
 <div id="toast"></div>
 
+<!-- Polyfills for old Android Chrome -->
+<script src="https://cdn.jsdelivr.net/npm/promise-polyfill@8/dist/polyfill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/whatwg-fetch@3.6.2/fetch.umd.js"></script>
+
+<!-- Compat check (ES5 only — runs on all browsers) -->
+<script>
+(function() {
+  function showErr(msg) {
+    var el = document.getElementById('login-error');
+    if (el) { el.textContent = msg; }
+    var btn = document.querySelector('.btn');
+    if (btn) { btn.disabled = true; btn.style.opacity = '0.4'; }
+  }
+  window.onerror = function(msg) {
+    showErr('JS Error: ' + msg + ' — הדפדפן ישן מדי');
+    return true;
+  };
+  if (!window.fetch || !window.Promise) {
+    document.addEventListener('DOMContentLoaded', function() {
+      showErr('הדפדפן ישן מדי — נסה לפתוח את הדף ב-Chrome מעודכן');
+    });
+  }
+})();
+</script>
+
 <!-- hls.js -->
 <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
 
@@ -766,19 +794,26 @@ function setError(msg) {
   document.getElementById('login-error').textContent = msg;
 }
 
-async function doLogin() {
-  const srv = document.getElementById('srv').value.trim().replace(/\/$/, '');
-  const usr = document.getElementById('usr').value.trim();
-  const pwd = document.getElementById('pwd').value.trim();
+function doLogin() {
+  var srv = document.getElementById('srv').value.trim().replace(/\/$/, '');
+  var usr = document.getElementById('usr').value.trim();
+  var pwd = document.getElementById('pwd').value.trim();
   if (!srv || !usr || !pwd) { setError('אנא מלא את כל השדות'); return; }
   setError('');
   useProxy = document.getElementById('proxy-cb').checked;
   localStorage.setItem('iptv_proxy', useProxy ? '1' : '');
   videoProxy = document.getElementById('vproxy').value.trim().replace(/\/$/, '');
   localStorage.setItem('iptv_vproxy', videoProxy);
-  creds = { srv, usr, pwd };
+  creds = { srv: srv, usr: usr, pwd: pwd };
   localStorage.setItem('iptv_creds', JSON.stringify(creds));
-  await loadApp();
+  loadApp();
+}
+
+function togglePwd() {
+  var input = document.getElementById('pwd');
+  var btn = document.getElementById('pwd-toggle');
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+  else { input.type = 'password'; btn.textContent = '👁'; }
 }
 
 function logout() {
@@ -800,22 +835,21 @@ function cancelLogin() {
 // ═══════════════════════════════════════
 //  STARTUP — auto-login
 // ═══════════════════════════════════════
-window.addEventListener('DOMContentLoaded', () => {
-  // Auto-enable proxy when served over HTTPS (GitHub Pages etc.)
-  const onHttps = window.location.protocol === 'https:';
-  const savedProxy = localStorage.getItem('iptv_proxy');
+window.addEventListener('DOMContentLoaded', function() {
+  var onHttps = window.location.protocol === 'https:';
+  var savedProxy = localStorage.getItem('iptv_proxy');
   useProxy = onHttps || savedProxy === '1';
   document.getElementById('proxy-cb').checked = useProxy;
 
-  const savedVProxy = localStorage.getItem('iptv_vproxy');
+  var savedVProxy = localStorage.getItem('iptv_vproxy');
   if (savedVProxy) {
     videoProxy = savedVProxy;
     document.getElementById('vproxy').value = savedVProxy;
   }
 
-  try { favs = new Set(JSON.parse(localStorage.getItem('iptv_favs') || '[]')); } catch(_) {}
+  try { favs = new Set(JSON.parse(localStorage.getItem('iptv_favs') || '[]')); } catch(e) {}
 
-  const saved = localStorage.getItem('iptv_creds');
+  var saved = localStorage.getItem('iptv_creds');
   if (saved) {
     try {
       creds = JSON.parse(saved);
@@ -830,75 +864,62 @@ window.addEventListener('DOMContentLoaded', () => {
 // ═══════════════════════════════════════
 //  LOAD CHANNELS & CATEGORIES
 // ═══════════════════════════════════════
-async function apiGet(action) {
-  let url = `${creds.srv}/player_api.php?username=${encodeURIComponent(creds.usr)}&password=${encodeURIComponent(creds.pwd)}&action=${action}`;
+function apiGet(action) {
+  var url = creds.srv + '/player_api.php?username=' + encodeURIComponent(creds.usr) + '&password=' + encodeURIComponent(creds.pwd) + '&action=' + action;
   if (useProxy) url = CORS_PROXY + encodeURIComponent(url);
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), 15000);
-  try {
-    const resp = await fetch(url, { signal: ctrl.signal });
-    if (!resp.ok) throw new Error(`HTTP ${resp.status} (${action})`);
+  var timeout = new Promise(function(_, reject) {
+    setTimeout(function() { reject(new Error('timeout — בדוק חיבור אינטרנט')); }, 15000);
+  });
+  return Promise.race([fetch(url), timeout]).then(function(resp) {
+    if (!resp.ok) throw new Error('HTTP ' + resp.status + ' (' + action + ')');
     return resp.json();
-  } catch (e) {
-    if (e.name === 'AbortError') throw new Error('timeout — בדוק חיבור אינטרנט');
-    throw e;
-  } finally {
-    clearTimeout(timer);
-  }
+  });
 }
 
-async function loadApp() {
+function loadApp() {
   showLoading('טוען קטגוריות…');
-  try {
-    // Step 1: fetch categories only (small response)
-    const cats = await apiGet('get_live_categories');
+  return apiGet('get_live_categories')
+    .then(function(cats) {
+      catMap = {};
+      (cats || []).forEach(function(c) { catMap[c.category_id] = c.category_name || ''; });
 
-    catMap = {};
-    (cats || []).forEach(c => { catMap[c.category_id] = c.category_name || ''; });
+      var hebCatIds = Object.keys(catMap).filter(function(id) {
+        return catMap[id].toLowerCase().indexOf('heb') !== -1;
+      });
 
-    // Step 2: find Hebrew category IDs
-    const hebCatIds = Object.entries(catMap)
-      .filter(([, name]) => name.toLowerCase().includes('heb'))
-      .map(([id]) => id);
+      showLoading('טוען ערוצים…');
 
-    showLoading('טוען ערוצים…');
+      if (hebCatIds.length > 0) {
+        return Promise.all(
+          hebCatIds.map(function(cid) {
+            return apiGet('get_live_streams&category_id=' + cid).catch(function() { return []; });
+          })
+        ).then(function(results) {
+          return results.reduce(function(acc, r) { return acc.concat(r); }, []);
+        });
+      } else {
+        return apiGet('get_live_streams').catch(function() { return []; }).then(function(s) {
+          showToast('לא נמצאו קטגוריות Hebrew — מציג הכל'); return s;
+        });
+      }
+    })
+    .then(function(streams) {
+      allCh = (streams || []).map(function(ch) {
+        return Object.assign({}, ch, { category_name: catMap[ch.category_id] || 'כללי' });
+      }).sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
 
-    // Step 3: fetch streams per Hebrew category in parallel (small targeted requests)
-    let streams = [];
-    if (hebCatIds.length > 0) {
-      const results = await Promise.all(
-        hebCatIds.map(cid =>
-          apiGet('get_live_streams&category_id=' + cid).catch(() => [])
-        )
-      );
-      streams = results.flat();
-    } else {
-      // Fallback: no Hebrew categories found — load all
-      streams = await apiGet('get_live_streams').catch(() => []);
-      showToast('לא נמצאו קטגוריות Hebrew — מציג הכל');
-    }
-
-    allCh = streams
-      .map(ch => ({ ...ch, category_name: catMap[ch.category_id] || 'כללי' }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-
-    if (allCh.length === 0) {
-      showToast('לא נמצאו ערוצים');
-    }
-
-    buildCategories();
-    renderChannels(allCh);
-
-    hideLoading();
-    document.getElementById('login-screen').style.display = 'none';
-    document.getElementById('app').style.display = 'flex';
-
-  } catch(e) {
-    hideLoading();
-    const msg = 'שגיאה: ' + e.message;
-    setError(msg);
-    document.getElementById('login-screen').style.display = 'flex';
-  }
+      if (allCh.length === 0) showToast('לא נמצאו ערוצים');
+      buildCategories();
+      renderChannels(allCh);
+      hideLoading();
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'flex';
+    })
+    .catch(function(e) {
+      hideLoading();
+      setError('שגיאה: ' + e.message);
+      document.getElementById('login-screen').style.display = 'flex';
+    });
 }
 
 // ═══════════════════════════════════════

@@ -733,7 +733,10 @@
       <div id="sidebar-search">
         <input type="text" id="search-box" placeholder="🔍 חיפוש ערוץ…" oninput="filterChannels()" autocomplete="off">
       </div>
-      <div id="channel-count"></div>
+      <div id="channel-count" style="display:flex;align-items:center;justify-content:space-between;padding-left:10px;">
+        <span id="channel-count-text"></span>
+        <button onclick="translateChannelNames()" id="trans-btn" title="תרגם שמות לעברית" style="background:none;border:1px solid #2a3045;color:#7a8499;font-size:12px;padding:3px 8px;border-radius:8px;cursor:pointer;">🌐 תרגם</button>
+      </div>
       <div id="channel-list"></div>
     </div>
 
@@ -1053,7 +1056,8 @@ function filterChannels() {
     if (activeCatId === 'all') matchCat = true;
     else if (activeCatId === 'favs') matchCat = favs.has(String(ch.stream_id));
     else matchCat = ch.category_id == activeCatId;
-    var matchQ = !q || ch.name.toLowerCase().indexOf(q) !== -1 || ch.category_name.toLowerCase().indexOf(q) !== -1;
+    var hebrewName = ch.hebrewName ? ch.hebrewName.toLowerCase() : '';
+    var matchQ = !q || ch.name.toLowerCase().indexOf(q) !== -1 || ch.category_name.toLowerCase().indexOf(q) !== -1 || hebrewName.indexOf(q) !== -1;
     return matchCat && matchQ;
   });
   renderChannels(filtCh);
@@ -1061,7 +1065,7 @@ function filterChannels() {
 
 function renderChannels(list) {
   var container = document.getElementById('channel-list');
-  document.getElementById('channel-count').textContent = list.length + ' ערוצים';
+  document.getElementById('channel-count-text').textContent = list.length + ' ערוצים';
   container.innerHTML = '';
   for (var i = 0; i < list.length; i++) {
     (function(ch) {
@@ -1076,7 +1080,7 @@ function renderChannels(list) {
       var isFav = favs.has(String(ch.stream_id));
       item.innerHTML = logoEl
         + '<div class="ch-info">'
-        + '<div class="ch-name">' + escHtml(ch.name) + '</div>'
+        + '<div class="ch-name">' + escHtml(ch.name) + (ch.hebrewName && ch.hebrewName !== ch.name ? ' <span style="font-size:13px;color:#7a8499;">(' + escHtml(ch.hebrewName) + ')</span>' : '') + '</div>'
         + '<div class="ch-cat">' + escHtml(ch.category_name) + '</div>'
         + '</div>'
         + '<button class="ch-fav' + (isFav ? ' active' : '') + '" data-id="' + ch.stream_id + '" title="מועדפים">★</button>';
@@ -1089,6 +1093,77 @@ function renderChannels(list) {
   }
 }
 
+function translateChannelNames() {
+  var btn = document.getElementById('trans-btn');
+  btn.textContent = '⏳ מתרגם…';
+  btn.disabled = true;
+
+  var cacheKey = 'iptv_trans_' + (creds.srv || '');
+  var cacheRaw = {};
+  try { cacheRaw = JSON.parse(safeStorage.getItem(cacheKey) || '{}'); } catch(e) {}
+  var cachedCount = cacheRaw._count || 0;
+  var cached = cacheRaw._map || {};
+
+  var toTranslate = [];
+  var toTranslateIdx = [];
+  for (var i = 0; i < allCh.length; i++) {
+    var name = allCh[i].name || '';
+    if (cachedCount === allCh.length && cached[name]) {
+      allCh[i].hebrewName = cached[name];
+    } else {
+      var heChars = (name.match(/[\u05d0-\u05ea]/g) || []).length;
+      if (heChars < 2) {
+        toTranslate.push(name);
+        toTranslateIdx.push(i);
+      }
+    }
+  }
+
+  if (toTranslate.length === 0) {
+    filterChannels();
+    btn.textContent = '✓ מתורגם';
+    return;
+  }
+
+  var BATCH = 40;
+  var batches = [];
+  for (var b = 0; b < toTranslate.length; b += BATCH) {
+    batches.push({ names: toTranslate.slice(b, b + BATCH), indices: toTranslateIdx.slice(b, b + BATCH) });
+  }
+
+  var done = 0;
+  function runBatch(batchIdx) {
+    if (batchIdx >= batches.length) {
+      safeStorage.setItem(cacheKey, JSON.stringify({ _count: allCh.length, _map: cached }));
+      filterChannels();
+      btn.textContent = '✓ מתורגם';
+      btn.disabled = false;
+      showToast('תורגמו ' + toTranslate.length + ' שמות לעברית');
+      return;
+    }
+    var batch = batches[batchIdx];
+    var text = batch.names.join('\n');
+    var url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=he&dt=t&q=' + encodeURIComponent(text);
+    fetch(url)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var full = '';
+        for (var s = 0; s < data[0].length; s++) full += data[0][s][0];
+        var lines = full.split('\n');
+        for (var t = 0; t < batch.names.length; t++) {
+          var tr = (lines[t] || batch.names[t]).trim();
+          allCh[batch.indices[t]].hebrewName = tr;
+          cached[batch.names[t]] = tr;
+        }
+        done += batch.names.length;
+        btn.textContent = '⏳ ' + done + '/' + toTranslate.length;
+        runBatch(batchIdx + 1);
+      })
+      .catch(function() { runBatch(batchIdx + 1); });
+  }
+  runBatch(0);
+}
+
 function toggleFav(streamId) {
   var id = String(streamId);
   if (favs.has(id)) favs.delete(id);
@@ -1096,9 +1171,7 @@ function toggleFav(streamId) {
   var favsArr = [];
   favs.forEach(function(v) { favsArr.push(v); });
   safeStorage.setItem('iptv_favs', JSON.stringify(favsArr));
-  var btn = document.querySelector('.ch-fav[data-id="' + id + '"]');
-  if (btn) btn.classList.toggle('active', favs.has(id));
-  if (activeCatId === 'favs') filterChannels();
+  filterChannels();
 }
 
 function escHtml(s) {
@@ -1140,6 +1213,7 @@ function startHLS(url) {
     hls = new Hls({ lowLatencyMode: false, maxBufferLength: 60, maxMaxBufferLength: 120, maxBufferSize: 60*1000*1000, maxBufferHole: 0.5 });
     hls.loadSource(url);
     hls.attachMedia(video);
+    video.play().catch(function() {});
     hls.on(Hls.Events.MANIFEST_PARSED, function() { video.play().catch(function() {}); });
     hls.on(Hls.Events.ERROR, function(e, data) {
       if (data.fatal) showToast('שגיאה: ' + data.type + ' — ' + data.details);

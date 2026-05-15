@@ -1084,20 +1084,22 @@ function playChannel(ch) {
 function startHLS(url) {
   var video = document.getElementById('video');
   stopPlayer();
+  alert('startHLS: ' + url.substring(0, 80));
   if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+    alert('Using hls.js');
     hls = new Hls({ lowLatencyMode: true, maxBufferLength: 20 });
     hls.loadSource(url);
     hls.attachMedia(video);
     hls.on(Hls.Events.MANIFEST_PARSED, function() { video.play().catch(function() {}); });
     hls.on(Hls.Events.ERROR, function(e, data) {
-      if (data.fatal) showToast('שגיאה בהפעלה — נסה ערוץ אחר');
+      if (data.fatal) alert('HLS error: ' + data.type + ' / ' + data.details);
     });
   } else {
-    // Native HLS fallback: Android video element supports m3u8 natively
-    // Also used when hls.js CDN fails to load (e.g. inside data: URL)
+    alert('Native video fallback (Hls=' + typeof Hls + ')');
     video.src = url;
     video.load();
-    video.play().catch(function() {});
+    video.onerror = function() { alert('video error: ' + (video.error ? video.error.code + ' ' + video.error.message : 'unknown')); };
+    video.play().catch(function(e) { alert('play() rejected: ' + e); });
   }
 }
 

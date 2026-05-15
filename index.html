@@ -837,15 +837,26 @@ function downloadLocal() {
   fetch(window.location.href)
     .then(function(r) { return r.text(); })
     .then(function(html) {
+      var inject = '<script>window.__localCreds=' + JSON.stringify({
+        srv: document.getElementById('srv').value || '',
+        usr: document.getElementById('usr').value || '',
+        pwd: document.getElementById('pwd').value || '',
+        proxy: false
+      }) + ';<\/script>';
+      html = html.replace('<head>', '<head>' + inject);
+
       var blob = new Blob([html], { type: 'text/html' });
-      var url = URL.createObjectURL(blob);
+      var blobUrl = URL.createObjectURL(blob);
+
       var a = document.createElement('a');
-      a.href = url;
+      a.href = blobUrl;
       a.download = 'iptv.html';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+
+      window.open(blobUrl, '_blank');
+      setTimeout(function() { URL.revokeObjectURL(blobUrl); }, 10000);
     })
     .catch(function() { alert('שגיאה בהורדה'); });
 }

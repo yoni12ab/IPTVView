@@ -745,8 +745,8 @@
     <!-- SIDEBAR -->
     <div id="sidebar">
       <div id="sidebar-search" style="position:relative;">
-        <input type="text" id="search-box" placeholder="🔍 חיפוש ערוץ…" oninput="filterChannels();document.getElementById('search-clear').style.display=this.value?'block':'none';" autocomplete="off" style="padding-left:32px;">
-        <button id="search-clear" onclick="clearSearch()" style="display:none;position:absolute;left:10px;top:50%;-webkit-transform:translateY(-50%);transform:translateY(-50%);background:none;border:none;color:#7a8499;font-size:18px;cursor:pointer;padding:0;line-height:1;">✕</button>
+        <input type="text" id="search-box" placeholder="🔍 חיפוש ערוץ…" oninput="filterChannels();document.getElementById('search-clear').style.display=this.value?'block':'none';" autocomplete="off" style="padding-right:32px;">
+        <button id="search-clear" onclick="clearSearch()" style="display:none;position:absolute;right:10px;top:50%;-webkit-transform:translateY(-50%);transform:translateY(-50%);background:none;border:none;color:#7a8499;font-size:18px;cursor:pointer;padding:0;line-height:1;">✕</button>
       </div>
       <div id="channel-count" style="display:flex;align-items:center;justify-content:space-between;padding-left:10px;">
         <span id="channel-count-text"></span>
@@ -1342,14 +1342,21 @@ function togglePageFullscreen() {
 }
 
 function toggleVideoFullscreen() {
-  var video = document.getElementById('video');
+  var sidebar = document.getElementById('sidebar');
   var fsBtn = document.getElementById('fs-btn');
-  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-    var req = video.requestFullscreen || video.webkitRequestFullscreen || video.mozRequestFullScreen;
-    if (req) { try { req.call(video); fsBtn.textContent = '✕'; } catch(e) {} }
+  var menuBtn = document.getElementById('menu-btn');
+  var npBar = document.getElementById('now-playing-bar');
+  var isFs = sidebar.style.display === 'none';
+  if (!isFs) {
+    sidebar.style.display = 'none';
+    if (menuBtn) menuBtn.style.display = 'none';
+    if (npBar) npBar.style.display = 'none';
+    fsBtn.textContent = '\u2715';
   } else {
-    var ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
-    if (ex) { try { ex.call(document); fsBtn.textContent = '⛶'; } catch(e) {} }
+    sidebar.style.display = '';
+    if (menuBtn) menuBtn.style.display = '';
+    if (npBar) npBar.style.display = '';
+    fsBtn.textContent = '\u26f6';
   }
 }
 

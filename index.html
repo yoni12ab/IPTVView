@@ -3,11 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="dark">
 <title>📺 טלוויזיה</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700;900&display=swap');
 
   :root {
+    color-scheme: dark;
     --bg:        #0d0f14;
     --surface:   #161a23;
     --panel:     #1e2330;
@@ -106,6 +108,15 @@
   }
   input:focus { border-color: var(--accent); }
   input::placeholder { color: var(--muted); opacity: .6; }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px #1e2330 inset !important;
+    -webkit-text-fill-color: #e8ecf4 !important;
+    caret-color: #e8ecf4;
+    transition: background-color 5000s ease-in-out 0s;
+  }
 
   .btn {
     display: block;

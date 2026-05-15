@@ -697,7 +697,9 @@
       <span id="status-text">מחובר</span>
       <button class="drawer-close" onclick="closeMenu()">✕</button>
     </div>
-    <div id="categories"></div>
+    <div style="padding:10px 12px;">
+      <select id="cat-select" onchange="selectCatByDropdown(this.value)" style="width:100%;background:#1e2330;border:2px solid #2a3045;color:#e8eaf0;font-family:'Heebo',sans-serif;font-size:16px;padding:10px 12px;border-radius:12px;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;"></select>
+    </div>
     <div class="drawer-actions">
       <button class="refresh-btn" id="refresh-btn" onclick="refreshChannels()" title="רענן ערוצים">⟳</button>
       <button class="refresh-btn" onclick="togglePageFullscreen()" title="מסך מלא">⛶</button>
@@ -1014,39 +1016,27 @@ function buildCategories() {
     var cid = allCh[i].category_id;
     if (!seen[cid]) { seen[cid] = true; usedCatIds.push(cid); }
   }
-  var container = document.getElementById('categories');
-  container.innerHTML = '';
+  var sel = document.getElementById('cat-select');
+  sel.innerHTML = '';
 
-  var favBtn = document.createElement('button');
-  favBtn.className = 'cat-btn' + (activeCatId === 'favs' ? ' active' : '');
-  favBtn.textContent = '⭐ מועדפים';
-  favBtn.dataset.cat = 'favs';
-  (function(b) { b.onclick = function() { selectCat('favs', b); }; })(favBtn);
-  container.appendChild(favBtn);
-
-  var allBtn = document.createElement('button');
-  allBtn.className = 'cat-btn' + (activeCatId === 'all' ? ' active' : '');
-  allBtn.textContent = '🌐 הכל';
-  allBtn.dataset.cat = 'all';
-  (function(b) { b.onclick = function() { selectCat('all', b); }; })(allBtn);
-  container.appendChild(allBtn);
-
+  var opts = [
+    { value: 'favs', label: '⭐ מועדפים' },
+    { value: 'all',  label: '🌐 כל הערוצים' }
+  ];
   for (var j = 0; j < usedCatIds.length; j++) {
-    var id = usedCatIds[j];
-    var btn = document.createElement('button');
-    btn.className = 'cat-btn';
-    btn.textContent = catMap[id] || id;
-    btn.dataset.cat = id;
-    (function(b, c) { b.onclick = function() { selectCat(c, b); }; })(btn, id);
-    container.appendChild(btn);
+    opts.push({ value: usedCatIds[j], label: catMap[usedCatIds[j]] || usedCatIds[j] });
+  }
+  for (var k = 0; k < opts.length; k++) {
+    var opt = document.createElement('option');
+    opt.value = opts[k].value;
+    opt.textContent = opts[k].label;
+    if (String(opts[k].value) === String(activeCatId)) opt.selected = true;
+    sel.appendChild(opt);
   }
 }
 
-function selectCat(catId, btn) {
+function selectCatByDropdown(catId) {
   activeCatId = catId;
-  var catBtns = Array.prototype.slice.call(document.querySelectorAll('.cat-btn'));
-  for (var i = 0; i < catBtns.length; i++) { catBtns[i].classList.remove('active'); }
-  btn.classList.add('active');
   filterChannels();
   closeMenu();
 }

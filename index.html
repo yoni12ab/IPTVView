@@ -783,6 +783,12 @@ var CORS_PROXY = 'https://corsproxy.io/?url=';
 var videoProxy = '';
 var favs = new Set();
 
+var safeStorage = {
+  getItem: function(k) { try { return localStorage.getItem(k); } catch(e) { return null; } },
+  setItem: function(k, v) { try { localStorage.setItem(k, v); } catch(e) {} },
+  removeItem: function(k) { try { localStorage.removeItem(k); } catch(e) {} }
+};
+
 // ═══════════════════════════════════════
 //  LOGIN
 // ═══════════════════════════════════════
@@ -797,11 +803,11 @@ function doLogin() {
   if (!srv || !usr || !pwd) { setError('אנא מלא את כל השדות'); return; }
   setError('');
   useProxy = document.getElementById('proxy-cb').checked;
-  localStorage.setItem('iptv_proxy', useProxy ? '1' : '');
+  safeStorage.setItem('iptv_proxy', useProxy ? '1' : '');
   videoProxy = document.getElementById('vproxy').value.trim().replace(/\/$/, '');
-  localStorage.setItem('iptv_vproxy', videoProxy);
+  safeStorage.setItem('iptv_vproxy', videoProxy);
   creds = { srv: srv, usr: usr, pwd: pwd };
-  localStorage.setItem('iptv_creds', JSON.stringify(creds));
+  safeStorage.setItem('iptv_creds', JSON.stringify(creds));
   loadApp();
 }
 
@@ -813,7 +819,7 @@ function togglePwd() {
 }
 
 function logout() {
-  localStorage.removeItem('iptv_creds');
+  safeStorage.removeItem('iptv_creds');
   document.getElementById('app').style.display = 'none';
   document.getElementById('login-screen').style.display = 'flex';
   stopPlayer();
@@ -823,7 +829,7 @@ function logout() {
 function cancelLogin() {
   hideLoading();
   creds = {};
-  localStorage.removeItem('iptv_creds');
+  safeStorage.removeItem('iptv_creds');
   document.getElementById('login-screen').style.display = 'flex';
   setError('');
 }
@@ -843,16 +849,16 @@ function openLocal() {
 // ═══════════════════════════════════════
 window.addEventListener('DOMContentLoaded', function() {
   var onHttps = window.location.protocol === 'https:';
-  var savedProxy = localStorage.getItem('iptv_proxy');
+  var savedProxy = safeStorage.getItem('iptv_proxy');
   useProxy = onHttps || savedProxy === '1';
   document.getElementById('proxy-cb').checked = useProxy;
 
-  var savedVProxy = localStorage.getItem('iptv_vproxy');
+  var savedVProxy = safeStorage.getItem('iptv_vproxy');
   if (savedVProxy) { videoProxy = savedVProxy; document.getElementById('vproxy').value = savedVProxy; }
 
-  try { favs = new Set(JSON.parse(localStorage.getItem('iptv_favs') || '[]')); } catch(e) {}
+  try { favs = new Set(JSON.parse(safeStorage.getItem('iptv_favs') || '[]')); } catch(e) {}
 
-  var saved = localStorage.getItem('iptv_creds');
+  var saved = safeStorage.getItem('iptv_creds');
   if (saved) {
     try {
       creds = JSON.parse(saved);
@@ -860,7 +866,7 @@ window.addEventListener('DOMContentLoaded', function() {
       document.getElementById('usr').value = creds.usr;
       document.getElementById('pwd').value = creds.pwd;
       loadApp();
-    } catch(e) { localStorage.removeItem('iptv_creds'); }
+    } catch(e) { safeStorage.removeItem('iptv_creds'); }
   }
 });
 
@@ -1020,7 +1026,7 @@ function toggleFav(streamId) {
   else favs.add(id);
   var favsArr = [];
   favs.forEach(function(v) { favsArr.push(v); });
-  localStorage.setItem('iptv_favs', JSON.stringify(favsArr));
+  safeStorage.setItem('iptv_favs', JSON.stringify(favsArr));
   var btn = document.querySelector('.ch-fav[data-id="' + id + '"]');
   if (btn) btn.classList.toggle('active', favs.has(id));
   if (activeCatId === 'favs') filterChannels();

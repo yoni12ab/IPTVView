@@ -659,8 +659,8 @@
     <button class="btn" onclick="doLogin()">🚀 כניסה</button>
     <div class="login-error" id="login-error"></div>
     <div style="text-align:center;margin-top:18px;">
-      <a href="index.html" download="iptv.html" style="color:#2563eb;font-size:14px;text-decoration:underline;">
-        💾 שמור לשימוש מקומי (HTTP ישיר)
+      <a href="#" onclick="openLocal();return false;" style="color:#2563eb;font-size:14px;text-decoration:underline;">
+        💾 פתח גרסה מקומית (לסטרימינג HTTP)
       </a>
     </div>
   </div>
@@ -695,6 +695,11 @@
     <div class="drawer-actions">
       <button class="refresh-btn" id="refresh-btn" onclick="refreshChannels()" title="רענן ערוצים">⟳</button>
       <button class="logout-btn" onclick="logout();closeMenu();">יציאה ↩</button>
+    </div>
+    <div style="padding:10px 14px;border-top:1px solid var(--border);">
+      <a href="#" onclick="openLocal();return false;" style="color:var(--accent);font-size:13px;text-decoration:underline;">
+        💾 פתח גרסה מקומית (HTTP)
+      </a>
     </div>
   </div>
 
@@ -821,6 +826,17 @@ function cancelLogin() {
   localStorage.removeItem('iptv_creds');
   document.getElementById('login-screen').style.display = 'flex';
   setError('');
+}
+
+function openLocal() {
+  fetch(window.location.href)
+    .then(function(r) { return r.text(); })
+    .then(function(html) {
+      var w = window.open('', '_blank');
+      if (w) { w.document.open(); w.document.write(html); w.document.close(); }
+      else { alert('אפשר פתיחת חלונות קופצים בדפדפן ונסה שוב'); }
+    })
+    .catch(function() { alert('שגיאה בטעינה'); });
 }
 
 // ═══════════════════════════════════════

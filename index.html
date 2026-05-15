@@ -1320,10 +1320,7 @@ function closeMenu() {
 //  REFRESH
 // ═══════════════════════════════════════
 function refreshChannels() {
-  if (!Object.keys(creds).length) return;
-  var btn = document.getElementById('refresh-btn');
-  btn.classList.add('spinning');
-  loadApp().then(function() { btn.classList.remove('spinning'); }, function() { btn.classList.remove('spinning'); });
+  window.location.reload(true);
 }
 
 // ═══════════════════════════════════════

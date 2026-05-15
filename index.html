@@ -838,6 +838,13 @@ function openLocal() {
   fetch(window.location.href)
     .then(function(r) { return r.text(); })
     .then(function(html) {
+      var inject = '<script>window.__localCreds=' + JSON.stringify({
+        srv: document.getElementById('srv').value || '',
+        usr: document.getElementById('usr').value || '',
+        pwd: document.getElementById('pwd').value || '',
+        proxy: document.getElementById('proxy-cb').checked
+      }) + ';<\/script>';
+      html = html.replace('<head>', '<head>' + inject);
       var url = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
       window.open(url, '_blank');
     })
@@ -858,15 +865,25 @@ window.addEventListener('DOMContentLoaded', function() {
 
   try { favs = new Set(JSON.parse(safeStorage.getItem('iptv_favs') || '[]')); } catch(e) {}
 
-  var saved = safeStorage.getItem('iptv_creds');
-  if (saved) {
-    try {
-      creds = JSON.parse(saved);
-      document.getElementById('srv').value = creds.srv;
-      document.getElementById('usr').value = creds.usr;
-      document.getElementById('pwd').value = creds.pwd;
-      loadApp();
-    } catch(e) { safeStorage.removeItem('iptv_creds'); }
+  if (window.__localCreds && window.__localCreds.srv) {
+    creds = { srv: window.__localCreds.srv, usr: window.__localCreds.usr, pwd: window.__localCreds.pwd };
+    useProxy = false;
+    document.getElementById('srv').value = creds.srv;
+    document.getElementById('usr').value = creds.usr;
+    document.getElementById('pwd').value = creds.pwd;
+    document.getElementById('proxy-cb').checked = false;
+    loadApp();
+  } else {
+    var saved = safeStorage.getItem('iptv_creds');
+    if (saved) {
+      try {
+        creds = JSON.parse(saved);
+        document.getElementById('srv').value = creds.srv;
+        document.getElementById('usr').value = creds.usr;
+        document.getElementById('pwd').value = creds.pwd;
+        loadApp();
+      } catch(e) { safeStorage.removeItem('iptv_creds'); }
+    }
   }
 });
 

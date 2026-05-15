@@ -658,10 +658,9 @@
 
     <button class="btn" onclick="doLogin()">🚀 כניסה</button>
     <div class="login-error" id="login-error"></div>
-    <div style="text-align:center;margin-top:18px;">
-      <a href="#" onclick="openLocal();return false;" style="color:#2563eb;font-size:14px;text-decoration:underline;">
-        💾 פתח גרסה מקומית (לסטרימינג HTTP)
-      </a>
+    <div style="text-align:center;margin-top:18px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;">
+      <a href="#" onclick="openLocal();return false;" style="color:#2563eb;font-size:14px;text-decoration:underline;">🖥 פתח בטאב</a>
+      <a href="#" onclick="downloadLocal();return false;" style="color:#2563eb;font-size:14px;text-decoration:underline;">⬇ הורד קובץ HTML</a>
     </div>
   </div>
 </div>
@@ -697,10 +696,9 @@
       <button class="logout-btn" onclick="logout();closeMenu();">יציאה ↩</button>
     </div>
     <div style="padding:8px 14px;font-size:11px;color:#7a8499;border-top:1px solid #2a3045;">v15-May-2026 · favs · ES5 · local mode</div>
-    <div style="padding:10px 14px;border-top:1px solid #2a3045;">
-      <a href="#" onclick="openLocal();return false;" style="color:#4a9eff;font-size:13px;text-decoration:underline;">
-        💾 פתח גרסה מקומית (HTTP)
-      </a>
+    <div style="padding:10px 14px;border-top:1px solid #2a3045;display:flex;gap:14px;">
+      <a href="#" onclick="openLocal();return false;" style="color:#4a9eff;font-size:13px;text-decoration:underline;">🖥 פתח בטאב</a>
+      <a href="#" onclick="downloadLocal();return false;" style="color:#4a9eff;font-size:13px;text-decoration:underline;">⬇ הורד HTML</a>
     </div>
   </div>
 
@@ -833,6 +831,23 @@ function cancelLogin() {
   safeStorage.removeItem('iptv_creds');
   document.getElementById('login-screen').style.display = 'flex';
   setError('');
+}
+
+function downloadLocal() {
+  fetch(window.location.href)
+    .then(function(r) { return r.text(); })
+    .then(function(html) {
+      var blob = new Blob([html], { type: 'text/html' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = 'iptv.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 5000);
+    })
+    .catch(function() { alert('שגיאה בהורדה'); });
 }
 
 function openLocal() {

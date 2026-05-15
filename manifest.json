@@ -1,6 +1,6 @@
 {
-  "name": "הטלוויזיה שלי",
-  "short_name": "IPTV",
+  "name": "YafaTV",
+  "short_name": "YafaTV",
   "description": "ערוצים ישראליים",
   "start_url": "/IPTVView/",
   "display": "standalone",

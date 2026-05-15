@@ -761,32 +761,17 @@
 // ═══════════════════════════════════════
 //  STATE
 // ═══════════════════════════════════════
-let creds   = {};
-let allCh   = [];   // [{stream_id, name, stream_icon, category_id, category_name}]
-let filtCh  = [];   // currently shown
-let catMap  = {};   // category_id → name
-let activeCatId = 'all';
-let hls     = null;
-let activeStreamId = null;
-let useProxy = false;
-const CORS_PROXY = 'https://corsproxy.io/?url=';
-let videoProxy = '';   // Cloudflare Worker URL for HLS proxying
-let favs = new Set();
-
-// ═══════════════════════════════════════
-//  HEBREW / ISRAELI KEYWORDS
-// ═══════════════════════════════════════
-const IL_KEYWORDS = [
-  'heb','hebrew','israel','israeli','il ',
-  'כאן','קשת','רשת','ערוץ','ספורט ישראל','ישראל','עברית',
-  'reshet','keshet','kan ','sport5','sport 5','ilive',
-  'beitar','maccabi','mako','walla','arutz'
-];
-
-function isIsraeli(str) {
-  const s = (str || '').toLowerCase();
-  return IL_KEYWORDS.some(k => s.includes(k));
-}
+var creds = {};
+var allCh = [];
+var filtCh = [];
+var catMap = {};
+var activeCatId = 'all';
+var hls = null;
+var activeStreamId = null;
+var useProxy = false;
+var CORS_PROXY = 'https://corsproxy.io/?url=';
+var videoProxy = '';
+var favs = new Set();
 
 // ═══════════════════════════════════════
 //  LOGIN
@@ -834,7 +819,7 @@ function cancelLogin() {
 }
 
 // ═══════════════════════════════════════
-//  STARTUP — auto-login
+//  STARTUP
 // ═══════════════════════════════════════
 window.addEventListener('DOMContentLoaded', function() {
   var onHttps = window.location.protocol === 'https:';
@@ -843,10 +828,7 @@ window.addEventListener('DOMContentLoaded', function() {
   document.getElementById('proxy-cb').checked = useProxy;
 
   var savedVProxy = localStorage.getItem('iptv_vproxy');
-  if (savedVProxy) {
-    videoProxy = savedVProxy;
-    document.getElementById('vproxy').value = savedVProxy;
-  }
+  if (savedVProxy) { videoProxy = savedVProxy; document.getElementById('vproxy').value = savedVProxy; }
 
   try { favs = new Set(JSON.parse(localStorage.getItem('iptv_favs') || '[]')); } catch(e) {}
 
@@ -863,7 +845,7 @@ window.addEventListener('DOMContentLoaded', function() {
 });
 
 // ═══════════════════════════════════════
-//  LOAD CHANNELS & CATEGORIES
+//  API
 // ═══════════════════════════════════════
 function apiGet(action) {
   var url = creds.srv + '/player_api.php?username=' + encodeURIComponent(creds.usr) + '&password=' + encodeURIComponent(creds.pwd) + '&action=' + action;
@@ -883,13 +865,10 @@ function loadApp() {
     .then(function(cats) {
       catMap = {};
       (cats || []).forEach(function(c) { catMap[c.category_id] = c.category_name || ''; });
-
       var hebCatIds = Object.keys(catMap).filter(function(id) {
         return catMap[id].toLowerCase().indexOf('heb') !== -1;
       });
-
       showLoading('טוען ערוצים…');
-
       if (hebCatIds.length > 0) {
         return Promise.all(
           hebCatIds.map(function(cid) {
@@ -908,7 +887,6 @@ function loadApp() {
       allCh = (streams || []).map(function(ch) {
         return Object.assign({}, ch, { category_name: catMap[ch.category_id] || 'כללי' });
       }).sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
-
       if (allCh.length === 0) showToast('לא נמצאו ערוצים');
       buildCategories();
       renderChannels(allCh);
@@ -924,41 +902,46 @@ function loadApp() {
 }
 
 // ═══════════════════════════════════════
-//  CATEGORY BUTTONS
+//  CATEGORIES
 // ═══════════════════════════════════════
 function buildCategories() {
-  const usedCatIds = [...new Set(allCh.map(c => c.category_id))];
-  const container = document.getElementById('categories');
+  var seen = {}, usedCatIds = [];
+  for (var i = 0; i < allCh.length; i++) {
+    var cid = allCh[i].category_id;
+    if (!seen[cid]) { seen[cid] = true; usedCatIds.push(cid); }
+  }
+  var container = document.getElementById('categories');
   container.innerHTML = '';
 
-  const favBtn = document.createElement('button');
+  var favBtn = document.createElement('button');
   favBtn.className = 'cat-btn' + (activeCatId === 'favs' ? ' active' : '');
   favBtn.textContent = '⭐ מועדפים';
   favBtn.dataset.cat = 'favs';
-  favBtn.onclick = () => selectCat('favs', favBtn);
+  (function(b) { b.onclick = function() { selectCat('favs', b); }; })(favBtn);
   container.appendChild(favBtn);
 
-  const allBtn = document.createElement('button');
+  var allBtn = document.createElement('button');
   allBtn.className = 'cat-btn' + (activeCatId === 'all' ? ' active' : '');
   allBtn.textContent = '🌐 הכל';
   allBtn.dataset.cat = 'all';
-  allBtn.onclick = () => selectCat('all', allBtn);
+  (function(b) { b.onclick = function() { selectCat('all', b); }; })(allBtn);
   container.appendChild(allBtn);
 
-  usedCatIds.forEach(cid => {
-    const name = catMap[cid] || cid;
-    const btn = document.createElement('button');
+  for (var j = 0; j < usedCatIds.length; j++) {
+    var id = usedCatIds[j];
+    var btn = document.createElement('button');
     btn.className = 'cat-btn';
-    btn.textContent = name;
-    btn.dataset.cat = cid;
-    btn.onclick = () => selectCat(cid, btn);
+    btn.textContent = catMap[id] || id;
+    btn.dataset.cat = id;
+    (function(b, c) { b.onclick = function() { selectCat(c, b); }; })(btn, id);
     container.appendChild(btn);
-  });
+  }
 }
 
 function selectCat(catId, btn) {
   activeCatId = catId;
-  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  var catBtns = Array.prototype.slice.call(document.querySelectorAll('.cat-btn'));
+  for (var i = 0; i < catBtns.length; i++) { catBtns[i].classList.remove('active'); }
   btn.classList.add('active');
   filterChannels();
   closeMenu();
@@ -968,55 +951,56 @@ function selectCat(catId, btn) {
 //  FILTER + RENDER
 // ═══════════════════════════════════════
 function filterChannels() {
-  const q = document.getElementById('search-box').value.trim().toLowerCase();
-  filtCh = allCh.filter(ch => {
-    const matchCat = activeCatId === 'all'
-      ? true
-      : activeCatId === 'favs'
-        ? favs.has(String(ch.stream_id))
-        : ch.category_id == activeCatId;
-    const matchQ = !q || ch.name.toLowerCase().includes(q) || ch.category_name.toLowerCase().includes(q);
+  var q = document.getElementById('search-box').value.trim().toLowerCase();
+  filtCh = allCh.filter(function(ch) {
+    var matchCat;
+    if (activeCatId === 'all') matchCat = true;
+    else if (activeCatId === 'favs') matchCat = favs.has(String(ch.stream_id));
+    else matchCat = ch.category_id == activeCatId;
+    var matchQ = !q || ch.name.toLowerCase().indexOf(q) !== -1 || ch.category_name.toLowerCase().indexOf(q) !== -1;
     return matchCat && matchQ;
   });
   renderChannels(filtCh);
 }
 
 function renderChannels(list) {
-  const container = document.getElementById('channel-list');
-  document.getElementById('channel-count').textContent = `${list.length} ערוצים`;
+  var container = document.getElementById('channel-list');
+  document.getElementById('channel-count').textContent = list.length + ' ערוצים';
   container.innerHTML = '';
-
-  list.forEach(ch => {
-    const item = document.createElement('div');
-    item.className = 'channel-item' + (ch.stream_id == activeStreamId ? ' active' : '');
-    item.dataset.id = ch.stream_id;
-    item.setAttribute('tabindex', '0');
-
-    const logoEl = ch.stream_icon
-      ? `<img class="ch-logo" src="${escHtml(ch.stream_icon)}" alt="" onerror="this.style.display='none';this.nextSibling.style.display='flex'">`
-        + `<div class="ch-logo-placeholder" style="display:none">📺</div>`
-      : `<div class="ch-logo-placeholder">📺</div>`;
-    const isFav = favs.has(String(ch.stream_id));
-    item.innerHTML = `
-      ${logoEl}
-      <div class="ch-info">
-        <div class="ch-name">${escHtml(ch.name)}</div>
-        <div class="ch-cat">${escHtml(ch.category_name)}</div>
-      </div>
-      <button class="ch-fav${isFav ? ' active' : ''}" data-id="${ch.stream_id}" title="מועדפים">★</button>
-    `;
-    item.querySelector('.ch-fav').addEventListener('click', e => { e.stopPropagation(); toggleFav(ch.stream_id); });
-    item.addEventListener('click', () => playChannel(ch));
-    container.appendChild(item);
-  });
+  for (var i = 0; i < list.length; i++) {
+    (function(ch) {
+      var item = document.createElement('div');
+      item.className = 'channel-item' + (ch.stream_id == activeStreamId ? ' active' : '');
+      item.dataset.id = ch.stream_id;
+      item.setAttribute('tabindex', '0');
+      var logoEl = ch.stream_icon
+        ? '<img class="ch-logo" src="' + escHtml(ch.stream_icon) + '" alt="" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">'
+          + '<div class="ch-logo-placeholder" style="display:none">📺</div>'
+        : '<div class="ch-logo-placeholder">📺</div>';
+      var isFav = favs.has(String(ch.stream_id));
+      item.innerHTML = logoEl
+        + '<div class="ch-info">'
+        + '<div class="ch-name">' + escHtml(ch.name) + '</div>'
+        + '<div class="ch-cat">' + escHtml(ch.category_name) + '</div>'
+        + '</div>'
+        + '<button class="ch-fav' + (isFav ? ' active' : '') + '" data-id="' + ch.stream_id + '" title="מועדפים">★</button>';
+      item.querySelector('.ch-fav').addEventListener('click', function(e) {
+        e.stopPropagation(); toggleFav(ch.stream_id);
+      });
+      item.addEventListener('click', function() { playChannel(ch); });
+      container.appendChild(item);
+    })(list[i]);
+  }
 }
 
 function toggleFav(streamId) {
-  const id = String(streamId);
+  var id = String(streamId);
   if (favs.has(id)) favs.delete(id);
   else favs.add(id);
-  localStorage.setItem('iptv_favs', JSON.stringify([...favs]));
-  const btn = document.querySelector(`.ch-fav[data-id="${id}"]`);
+  var favsArr = [];
+  favs.forEach(function(v) { favsArr.push(v); });
+  localStorage.setItem('iptv_favs', JSON.stringify(favsArr));
+  var btn = document.querySelector('.ch-fav[data-id="' + id + '"]');
   if (btn) btn.classList.toggle('active', favs.has(id));
   if (activeCatId === 'favs') filterChannels();
 }
@@ -1029,50 +1013,44 @@ function escHtml(s) {
 //  PLAYBACK
 // ═══════════════════════════════════════
 function buildStreamUrl(ch) {
-  const url = `${creds.srv}/live/${encodeURIComponent(creds.usr)}/${encodeURIComponent(creds.pwd)}/${ch.stream_id}.m3u8`;
-  return videoProxy ? `${videoProxy}?url=${encodeURIComponent(url)}` : url;
+  var url = creds.srv + '/live/' + encodeURIComponent(creds.usr) + '/' + encodeURIComponent(creds.pwd) + '/' + ch.stream_id + '.m3u8';
+  return videoProxy ? videoProxy + '?url=' + encodeURIComponent(url) : url;
 }
 
 function playChannel(ch) {
   activeStreamId = ch.stream_id;
-  const url = buildStreamUrl(ch);
-
-  // Update UI
-  document.querySelectorAll('.channel-item').forEach(el => {
-    el.classList.toggle('active', el.dataset.id == ch.stream_id);
-  });
+  var url = buildStreamUrl(ch);
+  var items = Array.prototype.slice.call(document.querySelectorAll('.channel-item'));
+  for (var i = 0; i < items.length; i++) {
+    items[i].classList.toggle('active', items[i].dataset.id == ch.stream_id);
+  }
   document.getElementById('np-name').textContent = ch.name;
   document.getElementById('np-name').style.color = '';
   document.getElementById('np-status').innerHTML = '<span class="live-badge">LIVE</span>';
   document.getElementById('placeholder').style.display = 'none';
-
-  // Warn if browser will block HTTP stream from HTTPS page (hide if proxy is active)
-  const warnEl = document.getElementById('mixed-warn');
+  var warnEl = document.getElementById('mixed-warn');
   if (warnEl) {
-    const isHttpsPage  = window.location.protocol === 'https:';
-    const isHttpStream = url.startsWith('http://');
+    var isHttpsPage = window.location.protocol === 'https:';
+    var isHttpStream = url.indexOf('http://') === 0;
     warnEl.style.display = (isHttpsPage && isHttpStream && !videoProxy) ? 'block' : 'none';
   }
-
   startHLS(url);
 }
 
 function startHLS(url) {
-  const video = document.getElementById('video');
+  var video = document.getElementById('video');
   stopPlayer();
-
   if (Hls.isSupported()) {
     hls = new Hls({ lowLatencyMode: true, maxBufferLength: 20 });
     hls.loadSource(url);
     hls.attachMedia(video);
-    hls.on(Hls.Events.MANIFEST_PARSED, () => { video.play().catch(()=>{}); });
-    hls.on(Hls.Events.ERROR, (e, data) => {
+    hls.on(Hls.Events.MANIFEST_PARSED, function() { video.play().catch(function() {}); });
+    hls.on(Hls.Events.ERROR, function(e, data) {
       if (data.fatal) showToast('שגיאה בהפעלה — נסה ערוץ אחר');
     });
   } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-    // Safari native HLS
     video.src = url;
-    video.addEventListener('loadedmetadata', () => video.play().catch(()=>{}), { once: true });
+    video.addEventListener('loadedmetadata', function() { video.play().catch(function() {}); });
   } else {
     showToast('הדפדפן לא תומך ב-HLS');
   }
@@ -1080,9 +1058,8 @@ function startHLS(url) {
 
 function stopPlayer() {
   if (hls) { hls.destroy(); hls = null; }
-  const v = document.getElementById('video');
-  v.pause();
-  v.src = '';
+  var v = document.getElementById('video');
+  v.pause(); v.src = '';
 }
 
 // ═══════════════════════════════════════
@@ -1092,44 +1069,37 @@ function showLoading(msg) {
   document.getElementById('loading-text').textContent = msg || 'טוען…';
   document.getElementById('loading').style.display = 'flex';
 }
-function hideLoading() {
-  document.getElementById('loading').style.display = 'none';
-}
+function hideLoading() { document.getElementById('loading').style.display = 'none'; }
 
-let toastTimer;
+var toastTimer;
 function showToast(msg) {
-  const t = document.getElementById('toast');
+  var t = document.getElementById('toast');
   t.textContent = msg;
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 3500);
 }
 
 // ═══════════════════════════════════════
-//  SCREEN WAKE LOCK (keep screen on)
+//  SCREEN WAKE LOCK
 // ═══════════════════════════════════════
-let wakeLock = null;
-async function requestWakeLock() {
-  if ('wakeLock' in navigator) {
-    try { wakeLock = await navigator.wakeLock.request('screen'); } catch(_) {}
+function requestWakeLock() {
+  if (navigator.wakeLock) {
+    navigator.wakeLock.request('screen').catch(function() {});
   }
 }
-// Re-acquire after tab becomes visible again (OS releases it on tab switch)
-document.addEventListener('visibilitychange', () => {
+document.addEventListener('visibilitychange', function() {
   if (document.visibilityState === 'visible') requestWakeLock();
 });
 requestWakeLock();
 
 // ═══════════════════════════════════════
-//  DRAWER MENU
+//  DRAWER
 // ═══════════════════════════════════════
 function toggleMenu() {
-  const drawer = document.getElementById('drawer');
+  var drawer = document.getElementById('drawer');
   if (drawer.classList.contains('open')) closeMenu();
-  else {
-    drawer.classList.add('open');
-    document.getElementById('drawer-backdrop').classList.add('show');
-  }
+  else { drawer.classList.add('open'); document.getElementById('drawer-backdrop').classList.add('show'); }
 }
 function closeMenu() {
   document.getElementById('drawer').classList.remove('open');
@@ -1141,46 +1111,43 @@ function closeMenu() {
 // ═══════════════════════════════════════
 function refreshChannels() {
   if (!Object.keys(creds).length) return;
-  const btn = document.getElementById('refresh-btn');
+  var btn = document.getElementById('refresh-btn');
   btn.classList.add('spinning');
-  loadApp().finally(() => btn.classList.remove('spinning'));
+  loadApp().then(function() { btn.classList.remove('spinning'); }, function() { btn.classList.remove('spinning'); });
 }
 
 // ═══════════════════════════════════════
-//  FULLSCREEN ON VIDEO TAP
+//  FULLSCREEN
 // ═══════════════════════════════════════
-document.getElementById('video-wrapper').addEventListener('click', () => {
-  const video = document.getElementById('video');
+document.getElementById('video-wrapper').addEventListener('click', function() {
+  var video = document.getElementById('video');
   if (!video.src) return;
-  if (!document.fullscreenElement) {
-    (video.requestFullscreen || video.webkitRequestFullscreen || video.mozRequestFullScreen)
-      ?.call(video).catch(() => {});
+  if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    var req = video.requestFullscreen || video.webkitRequestFullscreen || video.mozRequestFullScreen;
+    if (req) { try { req.call(video); } catch(e) {} }
   } else {
-    (document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen)
-      ?.call(document);
+    var ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
+    if (ex) { try { ex.call(document); } catch(e) {} }
   }
 });
 
 // ═══════════════════════════════════════
-//  KEYBOARD / D-PAD NAVIGATION
+//  KEYBOARD / D-PAD
 // ═══════════════════════════════════════
-document.addEventListener('keydown', e => {
-  // Login: Enter submits
+document.addEventListener('keydown', function(e) {
   if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
     doLogin(); return;
   }
   if (document.getElementById('app').style.display !== 'flex') return;
-
-  // Exit fullscreen on Back/Escape
-  if ((e.key === 'Escape' || e.key === 'Backspace' || e.key === 'GoBack') && document.fullscreenElement) {
-    (document.exitFullscreen || document.webkitExitFullscreen)?.call(document);
+  if ((e.key === 'Escape' || e.key === 'Backspace' || e.key === 'GoBack') &&
+      (document.fullscreenElement || document.webkitFullscreenElement)) {
+    var ex = document.exitFullscreen || document.webkitExitFullscreen;
+    if (ex) { try { ex.call(document); } catch(err) {} }
     e.preventDefault(); return;
   }
-
-  const list  = document.getElementById('channel-list');
-  const items = [...list.querySelectorAll('.channel-item')];
-  const idx   = items.indexOf(document.activeElement);
-
+  var list = document.getElementById('channel-list');
+  var items = Array.prototype.slice.call(list.querySelectorAll('.channel-item'));
+  var idx = items.indexOf(document.activeElement);
   switch (e.key) {
     case 'ArrowDown':
       e.preventDefault();

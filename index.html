@@ -82,17 +82,20 @@
     font-weight: 600;
     margin-bottom: 8px;
     font-size: 16px;
-    color: var(--muted);
+    color: var(--text);
     text-transform: uppercase;
     letter-spacing: .08em;
   }
 
   input[type=text], input[type=password], input[type=url] {
     width: 100%;
-    background: var(--panel);
+    background: var(--panel) !important;
+    -webkit-appearance: none;
+    appearance: none;
     border: 2px solid var(--border);
     border-radius: var(--radius);
-    color: var(--text);
+    color: var(--text) !important;
+    -webkit-text-fill-color: var(--text);
     font-family: var(--font);
     font-size: 20px;
     padding: 16px 18px;
@@ -620,10 +623,7 @@
       <label for="proxy-cb" style="display:inline;text-transform:none;letter-spacing:0;font-size:15px;color:var(--muted);cursor:pointer;">מצב דפדפן — CORS Proxy (נדרש ב-Chrome/Firefox)</label>
     </div>
 
-    <div style="margin-bottom:16px;">
-      <label for="vproxy" style="font-size:13px;margin-bottom:6px;">Video Proxy URL <span style="font-weight:400;color:var(--muted);">(אופציונלי — לצפייה בדפדפן)</span></label>
-      <input type="url" id="vproxy" placeholder="https://iptv-proxy.MY-NAME.workers.dev" autocomplete="off" dir="ltr">
-    </div>
+    <input type="url" id="vproxy" style="display:none" autocomplete="off">
 
     <button class="btn" onclick="doLogin()">🚀 כניסה</button>
     <div class="login-error" id="login-error"></div>

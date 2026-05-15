@@ -832,11 +832,10 @@ function openLocal() {
   fetch(window.location.href)
     .then(function(r) { return r.text(); })
     .then(function(html) {
-      var w = window.open('', '_blank');
-      if (w) { w.document.open(); w.document.write(html); w.document.close(); }
-      else { alert('אפשר פתיחת חלונות קופצים בדפדפן ונסה שוב'); }
+      var url = 'data:text/html;charset=utf-8,' + encodeURIComponent(html);
+      window.open(url, '_blank');
     })
-    .catch(function() { alert('שגיאה בטעינה'); });
+    .catch(function() { alert('שגיאה בטעינה — נסה שוב'); });
 }
 
 // ═══════════════════════════════════════

@@ -738,7 +738,7 @@
       </div>
       <div id="channel-count" style="display:flex;align-items:center;justify-content:space-between;padding-left:10px;">
         <span id="channel-count-text"></span>
-        <button onclick="translateChannelNames()" id="trans-btn" title="תרגם שמות לעברית" style="background:none;border:1px solid #2a3045;color:#7a8499;font-size:12px;padding:3px 8px;border-radius:8px;cursor:pointer;">🌐 תרגם</button>
+        <span id="trans-btn" style="font-size:11px;color:#7a8499;"></span>
       </div>
       <div id="channel-list"></div>
     </div>
@@ -991,10 +991,12 @@ function loadApp() {
       if (allCh.length === 0) showToast('לא נמצאו ערוצים');
       if (favs.size > 0) activeCatId = 'favs';
       buildCategories();
+      applyCachedTranslations();
       filterChannels();
       hideLoading();
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';
+      autoTranslate();
     })
     .catch(function(e) {
       hideLoading();
@@ -1083,8 +1085,8 @@ function renderChannels(list) {
       var isFav = favs.has(String(ch.stream_id));
       item.innerHTML = logoEl
         + '<div class="ch-info">'
-        + '<div class="ch-name">' + escHtml(ch.name) + (ch.hebrewName && ch.hebrewName !== ch.name ? ' <span style="font-size:13px;color:#7a8499;">(' + escHtml(ch.hebrewName) + ')</span>' : '') + '</div>'
-        + '<div class="ch-cat">' + escHtml(ch.category_name) + '</div>'
+        + '<div class="ch-name">' + escHtml(ch.hebrewName || ch.name) + '</div>'
+        + '<div class="ch-cat">' + escHtml((ch.hebrewName && ch.hebrewName !== ch.name) ? ch.name : ch.category_name) + '</div>'
         + '</div>'
         + '<button class="ch-fav' + (isFav ? ' active' : '') + '" data-id="' + ch.stream_id + '" title="מועדפים">★</button>';
       item.querySelector('.ch-fav').addEventListener('click', function(e) {
@@ -1096,11 +1098,18 @@ function renderChannels(list) {
   }
 }
 
-function translateChannelNames() {
-  var btn = document.getElementById('trans-btn');
-  btn.textContent = '⏳ מתרגם…';
-  btn.disabled = true;
+function applyCachedTranslations() {
+  var cacheKey = 'iptv_trans_' + (creds.srv || '');
+  var cacheRaw = {};
+  try { cacheRaw = JSON.parse(safeStorage.getItem(cacheKey) || '{}'); } catch(e) {}
+  var cached = cacheRaw._map || {};
+  for (var i = 0; i < allCh.length; i++) {
+    var n = allCh[i].name || '';
+    if (cached[n]) allCh[i].hebrewName = cached[n];
+  }
+}
 
+function autoTranslate() {
   var cacheKey = 'iptv_trans_' + (creds.srv || '');
   var cacheRaw = {};
   try { cacheRaw = JSON.parse(safeStorage.getItem(cacheKey) || '{}'); } catch(e) {}
@@ -1122,11 +1131,14 @@ function translateChannelNames() {
     }
   }
 
+  var btn = document.getElementById('trans-btn');
   if (toTranslate.length === 0) {
+    if (btn) btn.textContent = '✓ עברית';
     filterChannels();
-    btn.textContent = '✓ מתורגם';
     return;
   }
+
+  if (btn) btn.textContent = '⏳ מתרגם…';
 
   var BATCH = 40;
   var batches = [];
@@ -1139,9 +1151,7 @@ function translateChannelNames() {
     if (batchIdx >= batches.length) {
       safeStorage.setItem(cacheKey, JSON.stringify({ _count: allCh.length, _map: cached }));
       filterChannels();
-      btn.textContent = '✓ מתורגם';
-      btn.disabled = false;
-      showToast('תורגמו ' + toTranslate.length + ' שמות לעברית');
+      if (btn) btn.textContent = '✓ עברית';
       return;
     }
     var batch = batches[batchIdx];
@@ -1159,7 +1169,8 @@ function translateChannelNames() {
           cached[batch.names[t]] = tr;
         }
         done += batch.names.length;
-        btn.textContent = '⏳ ' + done + '/' + toTranslate.length;
+        if (btn) btn.textContent = '⏳ ' + done + '/' + toTranslate.length;
+        filterChannels();
         runBatch(batchIdx + 1);
       })
       .catch(function() { runBatch(batchIdx + 1); });

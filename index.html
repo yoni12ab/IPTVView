@@ -1311,11 +1311,11 @@ function togglePageFullscreen() {
 }
 
 document.getElementById('video-wrapper').addEventListener('click', function() {
-  var video = document.getElementById('video');
-  if (!video.src) return;
+  if (!activeStreamId) return;
+  var el = document.documentElement;
   if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-    var req = video.requestFullscreen || video.webkitRequestFullscreen || video.mozRequestFullScreen;
-    if (req) { try { req.call(video); } catch(e) {} }
+    var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+    if (req) { try { req.call(el); } catch(e) {} }
   } else {
     var ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
     if (ex) { try { ex.call(document); } catch(e) {} }

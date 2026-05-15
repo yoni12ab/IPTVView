@@ -700,6 +700,7 @@
     <div id="categories"></div>
     <div class="drawer-actions">
       <button class="refresh-btn" id="refresh-btn" onclick="refreshChannels()" title="רענן ערוצים">⟳</button>
+      <button class="refresh-btn" onclick="togglePageFullscreen()" title="מסך מלא">⛶</button>
       <button class="logout-btn" onclick="logout();closeMenu();">יציאה ↩</button>
     </div>
     <div style="padding:8px 14px;font-size:11px;color:#7a8499;border-top:1px solid #2a3045;">v15-May-2026 · favs · ES5 · local mode</div>
@@ -1293,6 +1294,19 @@ function refreshChannels() {
 // ═══════════════════════════════════════
 //  FULLSCREEN
 // ═══════════════════════════════════════
+function togglePageFullscreen() {
+  var el = document.documentElement;
+  var isFs = document.fullscreenElement || document.webkitFullscreenElement;
+  if (!isFs) {
+    var req = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen;
+    if (req) { try { req.call(el); } catch(e) {} }
+  } else {
+    var ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
+    if (ex) { try { ex.call(document); } catch(e) {} }
+  }
+  closeMenu();
+}
+
 document.getElementById('video-wrapper').addEventListener('click', function() {
   var video = document.getElementById('video');
   if (!video.src) return;

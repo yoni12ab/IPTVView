@@ -728,6 +728,7 @@
     <div id="player-panel">
       <div id="video-wrapper">
         <video id="video" controls playsinline></video>
+        <button id="fs-btn" onclick="toggleVideoFullscreen()" style="display:none;position:absolute;top:8px;right:8px;background:rgba(0,0,0,.55);border:none;border-radius:8px;color:#fff;font-size:20px;width:36px;height:36px;cursor:pointer;z-index:10;line-height:1;">⛶</button>
         <div id="placeholder">
           <div class="ph-icon">📡</div>
           <p>בחר ערוץ מהרשימה</p>
@@ -1231,6 +1232,7 @@ function playChannel(ch) {
   document.getElementById('np-name').style.color = '';
   document.getElementById('np-status').innerHTML = '<span class="live-badge">LIVE</span>';
   document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('fs-btn').style.display = 'block';
   var warnEl = document.getElementById('mixed-warn');
   if (warnEl) {
     var isHttpsPage = window.location.protocol === 'https:';
@@ -1339,19 +1341,17 @@ function togglePageFullscreen() {
   closeMenu();
 }
 
-document.getElementById('video-wrapper').addEventListener('click', function() {
-  if (!activeStreamId) return;
+function toggleVideoFullscreen() {
   var video = document.getElementById('video');
+  var fsBtn = document.getElementById('fs-btn');
   if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-    var req = video.requestFullscreen || video.webkitRequestFullscreen || video.mozRequestFullScreen
-           || document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
-    var target = (video.requestFullscreen || video.webkitRequestFullscreen) ? video : document.documentElement;
-    if (req) { try { req.call(target); } catch(e) {} }
+    var req = video.requestFullscreen || video.webkitRequestFullscreen || video.mozRequestFullScreen;
+    if (req) { try { req.call(video); fsBtn.textContent = '✕'; } catch(e) {} }
   } else {
     var ex = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen;
-    if (ex) { try { ex.call(document); } catch(e) {} }
+    if (ex) { try { ex.call(document); fsBtn.textContent = '⛶'; } catch(e) {} }
   }
-});
+}
 
 // ═══════════════════════════════════════
 //  KEYBOARD / D-PAD

@@ -45,14 +45,27 @@
   }
 
   .login-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
+    background: #ffffff;
+    border: none;
     border-radius: 24px;
     padding: 48px 40px;
     width: 100%;
     max-width: 480px;
-    box-shadow: 0 32px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(74,158,255,.08);
+    box-shadow: 0 32px 80px rgba(0,0,0,.6);
   }
+  .login-card label { color: #333 !important; }
+  .login-card input[type=text],
+  .login-card input[type=password],
+  .login-card input[type=url] {
+    background: #f0f2f5 !important;
+    color: #111 !important;
+    -webkit-text-fill-color: #111 !important;
+    border-color: #ccc;
+  }
+  .login-card input[type=text]:focus,
+  .login-card input[type=password]:focus,
+  .login-card input[type=url]:focus { border-color: #2563eb; }
+  .login-card .proxy-row label { color: #555 !important; }
 
   .login-logo {
     font-size: 56px;
@@ -70,11 +83,11 @@
     font-weight: 900;
     text-align: center;
     margin-bottom: 6px;
-    color: var(--text);
+    color: #111;
   }
   .login-sub {
     text-align: center;
-    color: var(--muted);
+    color: #666;
     margin-bottom: 36px;
     font-size: 16px;
   }
@@ -163,12 +176,16 @@
   }
 
   .login-error {
-    color: var(--danger);
-    font-size: 16px;
+    color: #c00;
+    font-size: 17px;
+    font-weight: 700;
     text-align: center;
     margin-top: 14px;
     min-height: 22px;
+    padding: 8px;
+    border-radius: 8px;
   }
+  .login-error:not(:empty) { background: #ffe0e0; }
 
   /* ─── MAIN APP ──────────────────────────────────────────── */
   #app {
@@ -645,6 +662,7 @@
 <div id="loading">
   <div class="spinner"></div>
   <p id="loading-text">טוען ערוצים…</p>
+  <button onclick="cancelLogin()" style="margin-top:20px;background:transparent;border:2px solid #7a8499;color:#7a8499;font-size:16px;padding:10px 24px;border-radius:30px;cursor:pointer;">ביטול ↩</button>
 </div>
 
 <!-- ═══════════════ APP ═══════════════ -->
@@ -771,6 +789,14 @@ function logout() {
   allCh = []; filtCh = [];
 }
 
+function cancelLogin() {
+  hideLoading();
+  creds = {};
+  localStorage.removeItem('iptv_creds');
+  document.getElementById('login-screen').style.display = 'flex';
+  setError('');
+}
+
 // ═══════════════════════════════════════
 //  STARTUP — auto-login
 // ═══════════════════════════════════════
@@ -869,7 +895,8 @@ async function loadApp() {
 
   } catch(e) {
     hideLoading();
-    setError('שגיאה בחיבור לשרת: ' + e.message);
+    const msg = 'שגיאה: ' + e.message;
+    setError(msg);
     document.getElementById('login-screen').style.display = 'flex';
   }
 }

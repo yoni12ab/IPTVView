@@ -888,8 +888,9 @@ function loadApp() {
         return Object.assign({}, ch, { category_name: catMap[ch.category_id] || 'כללי' });
       }).sort(function(a, b) { return (a.name || '').localeCompare(b.name || ''); });
       if (allCh.length === 0) showToast('לא נמצאו ערוצים');
+      if (favs.size > 0) activeCatId = 'favs';
       buildCategories();
-      renderChannels(allCh);
+      filterChannels();
       hideLoading();
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'flex';

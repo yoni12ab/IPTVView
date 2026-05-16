@@ -892,6 +892,11 @@ function shareLoginLink() {
   var url = base + '?srv=' + encodeURIComponent(creds.srv)
                  + '&user=' + encodeURIComponent(creds.usr)
                  + '&pass=' + encodeURIComponent(creds.pwd);
+  // APK: use native Android shortcut dialog
+  if (window.AndroidApp && window.AndroidApp.createShortcut) {
+    try { window.AndroidApp.createShortcut(url, 'YafaTV'); closeMenu(); return; } catch(e) {}
+  }
+  // Browser fallback
   if (navigator.share) {
     navigator.share({ title: 'YafaTV', text: 'קישור כניסה ל-YafaTV', url: url });
   } else if (navigator.clipboard) {

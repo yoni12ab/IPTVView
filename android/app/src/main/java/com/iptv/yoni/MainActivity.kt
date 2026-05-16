@@ -1,16 +1,23 @@
 package com.iptv.yoni
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.graphics.drawable.Icon
+import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.View
 import android.view.WindowManager
+import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.pm.ShortcutInfoCompat
+import androidx.core.content.pm.ShortcutManagerCompat
+import androidx.core.graphics.drawable.IconCompat
 
 class MainActivity : AppCompatActivity() {
 
@@ -71,6 +78,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         webView.webViewClient = WebViewClient()
+        webView.addJavascriptInterface(WebAppInterface(this), "AndroidApp")
 
         // Load deep link URL if launched via intent, otherwise load default
         val intentUrl = intent?.data?.toString()
@@ -109,6 +117,22 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         webView.onPause()
+    }
+
+    inner class WebAppInterface(private val ctx: MainActivity) {
+        @JavascriptInterface
+        fun createShortcut(url: String, label: String) {
+            val intent = Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url)).apply {
+                setPackage(ctx.packageName)
+            }
+            val shortcut = ShortcutInfoCompat.Builder(ctx, "yafatv_login")
+                .setShortLabel(label)
+                .setLongLabel(label)
+                .setIcon(IconCompat.createWithResource(ctx, R.mipmap.ic_launcher))
+                .setIntent(intent)
+                .build()
+            ShortcutManagerCompat.requestPinShortcut(ctx, shortcut, null)
+        }
     }
 
     @Suppress("DEPRECATION")

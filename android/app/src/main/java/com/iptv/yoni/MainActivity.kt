@@ -71,7 +71,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         webView.webViewClient = WebViewClient()
-        webView.loadUrl(APP_URL)
+
+        // Load deep link URL if launched via intent, otherwise load default
+        val intentUrl = intent?.data?.toString()
+        webView.loadUrl(if (!intentUrl.isNullOrEmpty() && intentUrl.startsWith("https://yoni12ab.github.io/IPTVView")) intentUrl else APP_URL)
+    }
+
+    override fun onNewIntent(intent: android.content.Intent?) {
+        super.onNewIntent(intent)
+        val intentUrl = intent?.data?.toString()
+        if (!intentUrl.isNullOrEmpty() && intentUrl.startsWith("https://yoni12ab.github.io/IPTVView")) {
+            webView.loadUrl(intentUrl)
+        }
     }
 
     // Back button: exit fullscreen first, then let WebView handle history

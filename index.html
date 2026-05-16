@@ -728,7 +728,7 @@
       <button class="refresh-btn" onclick="togglePageFullscreen()" title="מסך מלא">⛶</button>
       <button class="logout-btn" onclick="logout();closeMenu();">יציאה ↩</button>
     </div>
-    <div style="padding:8px 14px;font-size:11px;color:#7a8499;border-top:1px solid #2a3045;">v1.1.2 · quality badges in Hebrew · bigger icons · search full list</div>
+    <div style="padding:8px 14px;font-size:11px;color:#7a8499;border-top:1px solid #2a3045;">v1.1.3 · deep link login · Hebrew quality badges · bigger icons</div>
     <div style="padding:10px 14px;border-top:1px solid #2a3045;display:flex;gap:14px;flex-wrap:wrap;">
       <a href="#" onclick="openLocal();return false;" style="color:#4a9eff;font-size:13px;text-decoration:underline;">🖥 פתח בטאב</a>
       <a href="#" onclick="downloadLocal();return false;" style="color:#4a9eff;font-size:13px;text-decoration:underline;">⬇ הורד HTML</a>
@@ -956,6 +956,10 @@ window.addEventListener('DOMContentLoaded', function() {
 
   try { favs = new Set(JSON.parse(safeStorage.getItem('iptv_favs') || '[]')); } catch(e) {}
 
+  // deep link: ?srv=...&user=...&pass=...
+  var urlParams = new URLSearchParams(window.location.search);
+  var dlSrv = urlParams.get('srv'), dlUsr = urlParams.get('user'), dlPass = urlParams.get('pass');
+
   if (window.__localCreds && window.__localCreds.srv) {
     creds = { srv: window.__localCreds.srv, usr: window.__localCreds.usr, pwd: window.__localCreds.pwd };
     useProxy = false;
@@ -963,6 +967,15 @@ window.addEventListener('DOMContentLoaded', function() {
     document.getElementById('usr').value = creds.usr;
     document.getElementById('pwd').value = creds.pwd;
     document.getElementById('proxy-cb').checked = false;
+    loadApp();
+  } else if (dlSrv && dlUsr && dlPass) {
+    creds = { srv: dlSrv, usr: dlUsr, pwd: dlPass };
+    document.getElementById('srv').value = dlSrv;
+    document.getElementById('usr').value = dlUsr;
+    document.getElementById('pwd').value = dlPass;
+    safeStorage.setItem('iptv_creds', JSON.stringify(creds));
+    // clean URL so credentials don't stay in address bar
+    history.replaceState(null, '', window.location.pathname);
     loadApp();
   } else {
     var saved = safeStorage.getItem('iptv_creds');
